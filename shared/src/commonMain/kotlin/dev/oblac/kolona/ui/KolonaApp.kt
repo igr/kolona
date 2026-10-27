@@ -19,12 +19,14 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -119,27 +121,30 @@ internal fun DrawScope.flag(city: City, area: Size = size) {
 internal fun Brand(strings: Strings, compact: Boolean = false) {
     val icon = if (compact) 30.dp else 44.dp
     val subtitle = if (compact) 7.sp else 9.sp
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 12.dp)) {
-        Canvas(Modifier.size(icon).clip(RoundedCornerShape(10.dp)).background(Palette.Gold)) {
-            val s = size.width / 44f
-            withTransform({ scale(s, s, Offset.Zero) }) {
-                round(9f, 13f, 26f, 7f, Palette.Ink, 1f)
-                round(9f, 23f, 26f, 7f, Palette.Ink, 1f)
-                round(12f, 30f, 4f, 5f, Palette.Ink, 1f)
-                round(28f, 30f, 4f, 5f, Palette.Ink, 1f)
-                drawLine(Palette.Gold, Offset(20f, 13f), Offset(15f, 20f), 3f)
-                drawLine(Palette.Gold, Offset(28f, 23f), Offset(23f, 30f), 3f)
+    // The wordmark is a logo pinned to the icon's height, so the system text size does not scale it.
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 12.dp)) {
+            Canvas(Modifier.size(icon).clip(RoundedCornerShape(10.dp)).background(Palette.Gold)) {
+                val s = size.width / 44f
+                withTransform({ scale(s, s, Offset.Zero) }) {
+                    round(9f, 13f, 26f, 7f, Palette.Ink, 1f)
+                    round(9f, 23f, 26f, 7f, Palette.Ink, 1f)
+                    round(12f, 30f, 4f, 5f, Palette.Ink, 1f)
+                    round(28f, 30f, 4f, 5f, Palette.Ink, 1f)
+                    drawLine(Palette.Gold, Offset(20f, 13f), Offset(15f, 20f), 3f)
+                    drawLine(Palette.Gold, Offset(28f, 23f), Offset(23f, 30f), 3f)
+                }
             }
-        }
-        // The subtitle's capitals start at the icon's top edge and the wordmark stands on its bottom edge.
-        Layout({
-            Text(strings[Copy.Subtitle], color = Palette.Gold, fontSize = subtitle, letterSpacing = if (compact) 2.2.sp else 3.3.sp, fontWeight = FontWeight.Bold)
-            Display(strings[Copy.Wordmark], if (compact) 32 else 48)
-        }, Modifier.height(icon)) { measurables, constraints ->
-            val (top, word) = measurables.map { it.measure(Constraints()) }
-            layout(maxOf(top.width, word.width), constraints.maxHeight) {
-                top.place(0, (subtitle.toPx() * .7f).roundToInt() - top[FirstBaseline])
-                word.place(0, constraints.maxHeight - word[FirstBaseline])
+            // The subtitle's capitals start at the icon's top edge and the wordmark stands on its bottom edge.
+            Layout({
+                Text(strings[Copy.Subtitle], color = Palette.Gold, fontSize = subtitle, letterSpacing = if (compact) 2.2.sp else 3.3.sp, fontWeight = FontWeight.Bold)
+                Display(strings[Copy.Wordmark], if (compact) 32 else 48)
+            }, Modifier.height(icon)) { measurables, constraints ->
+                val (top, word) = measurables.map { it.measure(Constraints()) }
+                layout(maxOf(top.width, word.width), constraints.maxHeight) {
+                    top.place(0, (subtitle.toPx() * .7f).roundToInt() - top[FirstBaseline])
+                    word.place(0, constraints.maxHeight - word[FirstBaseline])
+                }
             }
         }
     }
