@@ -13,8 +13,8 @@ Basic information for the first beta, on the internal testing track. Copy these 
 | Free or paid | Free |
 | Category | Action |
 | Contact email | Required and shown on the store page. Choose the address you want to show. |
-| Website | https://igr.github.io/kolona/ (in `docs/`, not online yet) |
-| Privacy policy | https://igr.github.io/kolona/privacy.html (in `docs/`, not online yet) |
+| Website | https://igr.github.io/kolona/ |
+| Privacy policy | https://igr.github.io/kolona/privacy.html |
 
 The name under the icon on the phone is also "Čuvar Kolone". It matches the name of the web game this one is based on. If that game is not yours, Google can reject the name as impersonation; then use "Guardian of the March".
 
@@ -96,4 +96,4 @@ First beta. Play a march in Belgrade, Paris and Milan. Try the four languages wi
 
 ## Pages
 
-The website and the privacy policy are `docs/index.html` and `docs/privacy.html`. To put them online at https://igr.github.io/kolona/, serve `docs/` from the `main` branch with GitHub Pages. The kolona repo is private: Pages on a private repo needs a paid plan, and the GitHub issue link on the pages works only when the repo is public.
+The website and the privacy policy are `docs/index.html` and `docs/privacy.html`. GitHub Pages serves them from `docs/` on `main`, so a push to `main` updates them.

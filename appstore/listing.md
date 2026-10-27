@@ -16,8 +16,8 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 | Copyright | 2026 Igor Spasic |
 | Age rating | Cartoon or Fantasy Violence: Frequent/Intense, because firing at cartoon police and thugs is the core of the game. Answer "None" or "No" to every other question. The result should be 13+. |
 | App Privacy | Data Not Collected |
-| Support URL | https://igr.github.io/kolona/ (in `docs/`, not online yet) |
-| Privacy Policy URL | https://igr.github.io/kolona/privacy.html (in `docs/`, not online yet) |
+| Support URL | https://igr.github.io/kolona/ |
+| Privacy Policy URL | https://igr.github.io/kolona/privacy.html |
 
 The name under the icon on the phone is also "Čuvar Kolone". It matches the name of the web game this one is based on. If that game is not yours, Apple can reject the name (guideline 4.1); then use "Guardian of the March".
 
@@ -55,7 +55,7 @@ No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND
 
 ## Pages
 
-The support page and the privacy policy are `docs/index.html` and `docs/privacy.html`. To put them online at https://igr.github.io/kolona/, serve `docs/` from the `main` branch with GitHub Pages. The kolona repo is private: Pages on a private repo needs a paid plan, and the GitHub issue link on the pages works only when the repo is public.
+The support page and the privacy policy are `docs/index.html` and `docs/privacy.html`. GitHub Pages serves them from `docs/` on `main`, so a push to `main` updates them.
 
 ## Review
 
