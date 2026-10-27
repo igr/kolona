@@ -39,11 +39,13 @@ Install Android SDK Platform 37 and its build tools through Android Studio, then
 ./gradlew :androidApp:assembleDebug
 ```
 
+For Google Play, `./gradlew :androidApp:bundleRelease` writes `androidApp/build/outputs/bundle/release/androidApp-release.aab`, shrunk with R8. It is signed with the upload key named in an untracked `keystore.properties`; without that file the bundle is unsigned. `playstore/listing.md` shows how to make the key.
+
 The APK is written to `androidApp/build/outputs/apk/debug/androidApp-debug.apk`. Minimum API is 24. The activity requests portrait orientation; the shared UI also constrains the playfield to portrait when an OS or tablet window overrides orientation requests.
 
 ### iOS
 
-Open `iosApp/iosApp.xcodeproj`, choose the **Kolona** scheme and an iPhone simulator, and Run. Xcode's build phase compiles and embeds the Kotlin framework and Compose resources. A signing team is needed only for a physical device or distribution.
+Open `iosApp/iosApp.xcodeproj`, choose the **Kolona** scheme and an iPhone simulator, and Run. Xcode's build phase compiles and embeds the Kotlin framework and Compose resources. The project's signing team is used for a physical device and for distribution. The app icon is in `iosApp/iosApp/Assets.xcassets`, and `PrivacyInfo.xcprivacy` declares the UserDefaults and file timestamp APIs for App Store Connect.
 
 ```sh
 xcodebuild -project iosApp/iosApp.xcodeproj -scheme Kolona \
@@ -143,6 +145,9 @@ shared/src/jvmTest/      Sprite and map rendering tests, difficulty benchmark
 androidApp/             Android activity, manifest, icon, preferences
 iosApp/                 SwiftUI host, orientation/lifecycle, Xcode project
 desktopApp/             Portrait desktop launcher and macOS packaging
+playstore/              Google Play listing for the beta, and the 512 px store icon
+appstore/               App Store and TestFlight listing for the beta
+docs/                   Support and privacy pages for GitHub Pages
 ```
 
 Simulation runs at a fixed 60 Hz, independently of display refresh rate. Long frame stalls are capped instead of fast-forwarding. Geometry and navigation edges are cached; randomness can be seeded for repeatable tests. No network connection is required for gameplay.
@@ -177,4 +182,4 @@ Pinned toolchain: Kotlin 2.4.21, Compose Multiplatform 1.12.1, Android Gradle Pl
 
 ## Assets
 
-Vector artwork is implemented in Kotlin. Barlow Condensed and DM Sans are bundled under the SIL Open Font License; copies are in `licenses/`. No reference-site photographs, JavaScript, or external runtime assets are bundled.
+Vector artwork is implemented in Kotlin. The only images are the app icons for the stores and the pages (`playstore/icon-512.png`, the iOS `AppIcon`, and `docs/img/icon.png`), drawn from the Android launcher icon `ic_kolona.xml`. Barlow Condensed and DM Sans are bundled under the SIL Open Font License; copies are in `licenses/`. No reference-site photographs, JavaScript, or external runtime assets are bundled.

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Čuvar Kolone** is a portrait escort-defense game: the player guards a protest march through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. There are no image assets.
+**Čuvar Kolone** is a portrait escort-defense game: the player guards a protest march through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon.
 
 ## Commands
 
@@ -11,6 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./gradlew :shared:jvmTest --tests '*CityMapTest*'` runs one test class. Add `.testName` for one test.
 - `./gradlew :shared:compileKotlinIosArm64 :shared:compileKotlinIosSimulatorArm64` compiles the iOS Kotlin code.
 - `./gradlew :androidApp:assembleDebug` needs an Android SDK (see README).
+- `./gradlew :androidApp:bundleRelease` makes the Play bundle with R8. It is signed only when the untracked `keystore.properties` exists.
+- Store betas: `playstore/listing.md` and `appstore/listing.md` hold the listings and the upload steps. `docs/` holds the support and privacy pages.
 - Test report: `shared/build/reports/tests/jvmTest/index.html`. Count tests from `shared/build/test-results/jvmTest/*.xml` (the README states the count).
 - There is no linter.
 - Visual checks: the shell cannot take screenshots of the desktop window. Render screens headlessly in a throwaway jvmTest with `ImageComposeScene { KolonaApp(session) }` (see `CityFlowTest` for the setup and taps), write PNGs to a scratch folder, look at them, then delete the throwaway test.
