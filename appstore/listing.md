@@ -48,8 +48,8 @@ No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND
 
 ## Build
 
-- Archive with the Kolona scheme (Product > Archive) and upload from the Organizer (Distribute App > TestFlight & App Store). The signing team is K5GKT84X3Y, as in sisyphus.
-- Version 0.1.0, build 1. Every upload needs a higher build number: change `CURRENT_PROJECT_VERSION` in the Xcode project. `Info.plist` reads the version and the build number from the project.
+- `just beta-ios` archives this commit and uploads it to App Store Connect with `iosApp/ExportOptions.plist`, as the account signed in to Xcode. The Organizer works too (Product > Archive, then Distribute App > TestFlight & App Store). The signing team is K5GKT84X3Y, as in sisyphus.
+- Version 0.1.0. `just beta-ios` sets the build number to the commit count, so each upload is higher. `Info.plist` reads the version and the build number from the project.
 - `PrivacyInfo.xcprivacy` declares the UserDefaults and file timestamp APIs, as in sisyphus. `Info.plist` sets `ITSAppUsesNonExemptEncryption` to NO, so uploads skip the encryption question.
 - The project targets iPhone and iPad, and TestFlight runs on both. The App Store will then also need iPad screenshots. Set the target to iPhone only if you do not want iPad.
 

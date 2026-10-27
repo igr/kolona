@@ -56,6 +56,14 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme Kolona \
 
 Minimum iOS is 16; device and Apple Silicon simulator targets are included. Both iPhone and iPad declare portrait-only support. Scene changes pause the game. There is no Intel simulator target.
 
+### Store uploads
+
+`just beta` uploads the current commit to Google Play internal testing and to TestFlight (`just beta-android` or `just beta-ios` for one of them). `just release` uploads it as a production draft on Google Play (roll it out in Play Console) and as a build in App Store Connect (submit it for review there).
+
+- Commit first: the build number is the commit count, so every upload needs its own commit.
+- Android needs the upload key from `keystore.properties` and the Play service account key in `~/.android/sisyphus-play.json`, with access to this app in Play Console. Google Play takes the first bundle of an app only by hand in Play Console; the recipes work after that.
+- iOS uses the account signed in to Xcode and `iosApp/ExportOptions.plist`.
+
 ## Play
 
 1. Welcome → **ENTER THE CITY** → choose Belgrade, Paris, or Milan in the city dialog → **DEFEND THE MARCH** starts the game. Belgrade is preselected the first time.

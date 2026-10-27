@@ -76,7 +76,8 @@ First beta. Play a march in Belgrade, Paris and Milan. Try the four languages wi
 ## Build
 
 - `./gradlew :androidApp:bundleRelease` makes `androidApp/build/outputs/bundle/release/androidApp-release.aab`. Upload it in Internal testing > Create new release.
-- Version 0.1.0, version code 1. Every upload needs a higher version code: change `versionCode` in `androidApp/build.gradle.kts`.
+- Version 0.1.0. A plain `bundleRelease` has version code 1. Upload that first bundle by hand: Google Play takes the first bundle of an app only in Play Console.
+- After that, `just beta-android` builds and uploads this commit to internal testing, with the commit count as the version code. It needs the Play service account key `~/.android/sisyphus-play.json`, with access to this app in Play Console (Users and permissions).
 - The bundle is signed with the upload key named in `keystore.properties`, which is not in git. Without that file the bundle is unsigned, and Play rejects it. Make the key once; `keytool` asks for a password and your name:
 
   ```sh

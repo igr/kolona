@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `./gradlew :shared:compileKotlinIosArm64 :shared:compileKotlinIosSimulatorArm64` compiles the iOS Kotlin code.
 - `./gradlew :androidApp:assembleDebug` needs an Android SDK (see README).
 - `./gradlew :androidApp:bundleRelease` makes the Play bundle with R8. It is signed only when the untracked `keystore.properties` exists.
+- `just beta` uploads the current commit to Play internal testing and to TestFlight; `just release` uploads store builds. Commit first: the build number is the commit count.
 - Store betas: `playstore/listing.md` and `appstore/listing.md` hold the listings and the upload steps. `docs/` holds the support and privacy pages.
 - Test report: `shared/build/reports/tests/jvmTest/index.html`. Count tests from `shared/build/test-results/jvmTest/*.xml` (the README states the count).
 - There is no linter.
