@@ -38,15 +38,6 @@ class LanguageTest {
         assertEquals("NON MOLLIAMO", Strings(Language.Italian)[Copy.Banner])
     }
 
-    @Test fun gameNameFollowsTheLanguage() {
-        val names = listOf("Čuvar Kolone", "Guardian of the March", "Gardien du Cortège", "Guardiano del Corteo")
-        listOf(Language.Serbian, Language.English, Language.French, Language.Italian).zip(names).forEach { (language, name) ->
-            val strings = Strings(language)
-            assertEquals(name, strings[Copy.GameName])
-            assertEquals(name.uppercase(), "${strings[Copy.Subtitle]} ${strings[Copy.Wordmark]}", "$language: the wordmark spells the name")
-        }
-    }
-
     @Test fun souvenirLineNamesTheCityOfTheGame() {
         val lines = mapOf(
             City.Belgrade to listOf("SUVENIR IZ BEOGRADA", "A SOUVENIR FROM BELGRADE", "SOUVENIR DE BELGRADE", "SOUVENIR DA BELGRADO"),

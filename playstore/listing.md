@@ -6,7 +6,7 @@ Basic information for the first beta, on the internal testing track. Copy these 
 
 | Field | Value |
 |---|---|
-| App name (12/30) | Čuvar Kolone |
+| App name (16/30) | Protest Defender |
 | Package name | dev.oblac.kolona |
 | Default language | English (United States) |
 | App or game | Game |
@@ -16,17 +16,17 @@ Basic information for the first beta, on the internal testing track. Copy these 
 | Website | https://igr.github.io/kolona/ |
 | Privacy policy | https://igr.github.io/kolona/privacy.html |
 
-The name under the icon on the phone is also "Čuvar Kolone". It matches the name of the web game this one is based on. If that game is not yours, Google can reject the name as impersonation; then use "Guardian of the March".
+The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender: March".
 
 ## Short description (76/80)
 
 Guard a protest march through Belgrade, Paris and Milan to the final square.
 
-## Full description (1306/4000)
+## Full description (1286/4000)
 
 72 people. One road to freedom. You stand between them and chaos.
 
-Čuvar Kolone (Guardian of the March) is a portrait action game. A protest march walks through a real city, from one square to the next, and you are its guardian.
+Protest Defender is a portrait action game. A protest march walks through a real city, from one square to the next, and you are its guardian.
 
 - Tap the street to move. Your defender finds a way around the buildings. Markers at the edge of the screen show where the march and the threats are.
 - Stop to raise a barricade and fire automatically at threats in range. You cannot fire while running.

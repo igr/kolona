@@ -53,7 +53,7 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Row(Modifier.fillMaxWidth().padding(17.dp, 15.dp, 12.dp, 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Brand(strings, compact = true)
+                Brand(compact = true)
                 Spacer(Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
                     Text(strings[Copy.InMarch], color = Palette.Faint, fontSize = 8.sp, letterSpacing = 1.sp)

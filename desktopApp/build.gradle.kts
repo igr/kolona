@@ -14,15 +14,15 @@ compose.desktop {
         mainClass = "dev.oblac.kolona.desktop.MainKt"
         nativeDistributions {
             // Keep the executable name ASCII to avoid macOS signing/Unicode normalization issues.
-            packageName = "Cuvar Kolone"
+            packageName = "Protest Defender"
             // jpackage on macOS requires a positive first version component.
             packageVersion = "1.0.0"
             modules("java.prefs", "jdk.unsupported")
             macOS {
                 bundleID = "dev.oblac.kolona"
-                dockName = "Čuvar Kolone"
+                dockName = "Protest Defender"
                 infoPlist {
-                    extraKeysRawXml = "<key>CFBundleDisplayName</key><string>Čuvar Kolone</string>"
+                    extraKeysRawXml = "<key>CFBundleDisplayName</key><string>Protest Defender</string>"
                 }
             }
         }

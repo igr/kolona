@@ -3,7 +3,7 @@
     <application
         android:allowBackup="false"
         android:icon="@drawable/ic_kolona"
-        android:label="Čuvar Kolone"
+        android:label="Protest Defender"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity

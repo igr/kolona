@@ -2,7 +2,11 @@ package dev.oblac.kolona.i18n
 
 import dev.oblac.kolona.game.City
 
+/** The brand is the same in every language. */
 object GameIdentity {
+    const val NAME = "Protest Defender"
+    const val SUBTITLE = "PROTEST"
+    const val WORDMARK = "DEFENDER"
     const val VERSION = "0.1.0"
 }
 
@@ -16,9 +20,6 @@ enum class Language(val code: String, val nativeName: String) {
 
 // Every key requires a translation in every language, including all names drawn inside the game.
 enum class Copy(val sr: String, val en: String, val fr: String, val it: String) {
-    GameName("Čuvar Kolone", "Guardian of the March", "Gardien du Cortège", "Guardiano del Corteo"),
-    Subtitle("ČUVAR", "GUARDIAN OF THE", "GARDIEN DU", "GUARDIANO DEL"),
-    Wordmark("KOLONE", "MARCH", "CORTÈGE", "CORTEO"),
     Tagline("OD A DO SLOBODE", "FROM A TO FREEDOM", "DE A À LA LIBERTÉ", "DA A ALLA LIBERTÀ"),
     CityAwake("GRAD JE NA NOGAMA", "THE CITY IS AWAKE", "LA VILLE EST DEBOUT", "LA CITTÀ È SVEGLIA"),
     WelcomeTitle("Kolona ne sme\nda stane.", "The march\nmust go on.", "Le cortège\ndoit avancer.", "Il corteo\nnon si ferma."),
@@ -60,7 +61,7 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     GoalBody("Dovedi najmanje 36 od 72 ljudi do tačke B. Tokom dva govora kolona staje na 15 sekundi. Odbrani je dok ne nastavi put.", "Escort at least 36 of 72 people to point B. The march stops for two 15-second speeches. Protect it until it moves again.", "Escorte au moins 36 des 72 personnes jusqu’au point B. Le cortège s’arrête 15 secondes à chacun des deux discours. Protège-le jusqu’à ce qu’il reparte.", "Scorta almeno 36 persone su 72 fino al punto B. Il corteo si ferma per due discorsi di 15 secondi. Proteggilo finché non riparte."),
     GotIt("RAZUMEM", "GOT IT", "COMPRIS", "HO CAPITO"),
     Pause("Pauza", "Pause", "Pause", "Pausa"),
-    PausedEyebrow("PREDHANI, ČUVARE", "TAKE A BREATH, DEFENDER", "SOUFFLE UN PEU, DÉFENSEUR", "PRENDI FIATO, DIFENSORE"),
+    PausedEyebrow("PREDAHNI, ČUVARE", "TAKE A BREATH, DEFENDER", "SOUFFLE UN PEU, DÉFENSEUR", "PRENDI FIATO, DIFENSORE"),
     PausedTitle("Grad može\nda sačeka.", "The city\ncan wait.", "La ville\npeut attendre.", "La città\npuò aspettare."),
     PausedBody("Kolona je na sigurnom dok traje pauza.", "The march is safe while the game is paused.", "Le cortège est à l’abri pendant la pause.", "Il corteo è al sicuro durante la pausa."),
     Resume("NASTAVI ODBRANU", "RESUME DEFENDING", "REPRENDRE LA DÉFENSE", "RIPRENDI LA DIFESA"),

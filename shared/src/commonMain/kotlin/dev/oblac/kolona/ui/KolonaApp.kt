@@ -118,8 +118,8 @@ internal fun DrawScope.flag(city: City, area: Size = size) {
 }
 
 @Composable
-internal fun Brand(strings: Strings, compact: Boolean = false) {
-    val icon = if (compact) 30.dp else 44.dp
+internal fun Brand(compact: Boolean = false) {
+    val icon = if (compact) 28.dp else 40.dp
     val subtitle = if (compact) 7.sp else 9.sp
     // The wordmark is a logo pinned to the icon's height, so the system text size does not scale it.
     CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density)) {
@@ -137,8 +137,8 @@ internal fun Brand(strings: Strings, compact: Boolean = false) {
             }
             // The subtitle's capitals start at the icon's top edge and the wordmark stands on its bottom edge.
             Layout({
-                Text(strings[Copy.Subtitle], color = Palette.Gold, fontSize = subtitle, letterSpacing = if (compact) 2.2.sp else 3.3.sp, fontWeight = FontWeight.Bold)
-                Display(strings[Copy.Wordmark], if (compact) 32 else 48)
+                Text(GameIdentity.SUBTITLE, color = Palette.Gold, fontSize = subtitle, letterSpacing = if (compact) 2.6.sp else 3.3.sp, fontWeight = FontWeight.Bold)
+                Display(GameIdentity.WORDMARK, if (compact) 29 else 42)
             }, Modifier.height(icon)) { measurables, constraints ->
                 val (top, word) = measurables.map { it.measure(Constraints()) }
                 layout(maxOf(top.width, word.width), constraints.maxHeight) {
@@ -175,7 +175,7 @@ private fun WelcomeScreen(session: GameSession, strings: Strings) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             Row(Modifier.fillMaxWidth().padding(28.dp, 28.dp, 28.dp, 0.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween) {
-                Brand(strings)
+                Brand()
                 Text("01 / 72", color = Palette.Faint, fontSize = 10.sp, letterSpacing = 1.5.sp)
             }
             CityArtwork(session.city, Modifier.padding(top = 12.dp).fillMaxWidth().height(artHeight))
@@ -203,7 +203,7 @@ private fun MenuScreen(session: GameSession, strings: Strings) {
     if (choosing) CityDialog(session, strings) { choosing = false }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Brand(strings)
+            Brand()
             Column(horizontalAlignment = Alignment.End) {
                 Text(strings[Copy.Menu], color = Palette.Faint, fontSize = 8.sp, letterSpacing = 1.sp)
                 LanguageButton(session, strings)

@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Čuvar Kolone** is a portrait escort-defense game: the player guards a protest march through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon.
+**Protest Defender** is a portrait escort-defense game: the player guards a protest march through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon.
 
 ## Commands
 
@@ -34,12 +34,11 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
   - `GameScreen.kt` holds the HUD and the pause and result dialogs. The win dialog shows the souvenir.
   - `GameArt.kt` draws everything on the map. `MapPaint` caches paths. `city()` draws the map, culled to the camera rect. Each `building()`, `landmark()`, `prop()`, and `souvenir()` dispatches by city or kind. `CityArtwork` draws the welcome and menu art from a fixed preview map.
   - `GameSession.kt` holds the session state and preferences.
-- `i18n/Strings.kt`: `Language` (English default, Serbian, French, Italian), `Copy(sr, en, fr, it)` (every entry needs all four), and the `Strings` helpers. The game's name is translated too: `Copy.GameName`, and the wordmark's `Subtitle` above `Wordmark` (`Brand()`, and the desktop window title). `GameIdentity` holds only the version. `City.language` (`GameSession.kt`) is the language the "Also switch the language" checkbox picks. Milan maps to Italian.
+- `i18n/Strings.kt`: `Language` (English default, Serbian, French, Italian), `Copy(sr, en, fr, it)` (every entry needs all four), and the `Strings` helpers. `GameIdentity` holds the brand, the same in every language: Protest Defender, with PROTEST above DEFENDER in `Brand()`. App IDs stay `dev.oblac.kolona`. `City.language` (`GameSession.kt`) is the language the "Also switch the language" checkbox picks. Milan maps to Italian.
 - Saved preference keys: `language`, `city`, `city.language`, `best.<city code>` (the legacy `best` belongs to Belgrade). City codes are saved, so never rename one.
 - Text style:
   - Map labels always use local names, in every language.
   - French uses "tu" and "cortège" for the march. Italian uses "tu" and "corteo".
-  - In the in-game header, an accent on the wordmark must not touch the subtitle above it (the French È did). Check the HUD render in every language.
   - Use only glyphs present in both bundled fonts (`shared/src/commonMain/composeResources/font/`). U+202F is missing, and "→" exists only in DM Sans.
 
 ## Adding a new city (and country)

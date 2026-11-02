@@ -6,8 +6,8 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 
 | Field | Value |
 |---|---|
-| Name (12/30) | Čuvar Kolone |
-| Subtitle (21/30) | Guardian of the March |
+| Name (16/30) | Protest Defender |
+| Subtitle (28/30) | Lead the march to the square |
 | Bundle ID | dev.oblac.kolona |
 | SKU | kolona |
 | Primary language | English (U.S.) |
@@ -19,7 +19,7 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 | Support URL | https://igr.github.io/kolona/ |
 | Privacy Policy URL | https://igr.github.io/kolona/privacy.html |
 
-The name under the icon on the phone is also "Čuvar Kolone". It matches the name of the web game this one is based on. If that game is not yours, Apple can reject the name (guideline 4.1); then use "Guardian of the March".
+The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender: March".
 
 ## TestFlight
 
@@ -30,9 +30,9 @@ The name under the icon on the phone is also "Čuvar Kolone". It matches the nam
 | Sign-in required | No |
 | Beta App Review contact | Your name, phone and email. |
 
-### Beta App Description (333/4000)
+### Beta App Description (313/4000)
 
-Čuvar Kolone (Guardian of the March) is a portrait action game. Guard a protest march of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and tap a group of attackers to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
+Protest Defender is a portrait action game. Guard a protest march of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and tap a group of attackers to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
 
 ### What to Test (274/4000)
 
