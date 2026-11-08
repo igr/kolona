@@ -336,7 +336,13 @@ private fun CityDialog(session: GameSession, strings: Strings, onDismiss: () -> 
                         Spacer(Modifier.height(4.dp))
                         Display(strings.cityName(city), 26)
                     }
-                    if (selected) SymbolIcon(Symbol.Check, Modifier.size(24.dp), Palette.Mint)
+                    val best = session.best(city)
+                    if (best > 0) Column(Modifier.padding(horizontal = 12.dp), horizontalAlignment = Alignment.End) {
+                        Eyebrow(strings[Copy.CityBest], Palette.Faint)
+                        Text("$best / 72", color = Palette.Mint, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                    // The check keeps its place on every card, so the bests line up and stay put when the choice changes.
+                    Box(Modifier.size(24.dp)) { if (selected) SymbolIcon(Symbol.Check, Modifier.size(24.dp), Palette.Mint) }
                 }
                 Spacer(Modifier.height(6.dp))
                 Text("${city.template.stops.first().name} → ${city.template.stops.last().name}", color = Palette.Muted, fontSize = 12.sp)

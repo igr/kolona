@@ -80,6 +80,13 @@ class CitySessionTest {
         assertEquals(50, session.best)
     }
 
+    // The city dialog shows every city's best, not only the selected one's.
+    @Test fun everyCitysBestIsReadableWithoutSelectingIt() {
+        val session = GameSession(MemoryPreferenceStore().apply { put("best.belgrade", "50"); put("best.paris", "64") })
+        assertEquals(City.Belgrade, session.city)
+        assertEquals(listOf(50, 64, 0), City.entries.map { session.best(it) })
+    }
+
     @Test fun unknownSavedCityFallsBackToBelgradeAndBadBestIsIgnored() {
         val store = MemoryPreferenceStore().apply { put("city", "tokyo"); put("best", "abc"); put("best.paris", "999") }
         val session = GameSession(store)

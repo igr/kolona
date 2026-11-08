@@ -28,7 +28,8 @@ class GameSession(val store: PreferenceStore, val config: GameConfig = GameConfi
     var revision by mutableIntStateOf(0)
         private set
     private val bests = City.entries.map { it to savedBest(it) }.toMutableStateMap()
-    val best: Int get() = bests.getValue(city)
+    val best: Int get() = best(city)
+    fun best(city: City): Int = bests.getValue(city)
     private var recorded = false
 
     // Before cities there was one best, and it was Belgrade's.

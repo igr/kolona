@@ -63,11 +63,12 @@ class CityFlowTest {
         }
     }
 
-    // Every city card, the language box, and the button fit a 360 × 700 dp phone in every language.
+    // Every city card with its best, the language box, and the button fit a 360 × 700 dp phone in every language.
     // The button is 55 dp tall; a dialog that has to scroll cuts it at its lower edge. Only the dialog's button starts the game.
     @Test fun cityDialogFitsASmallPhoneWithoutScrolling() {
         for (language in Language.entries) {
-            val session = GameSession(MemoryPreferenceStore()).apply { select(language) }
+            val store = MemoryPreferenceStore().apply { City.entries.forEach { put("best.${it.code}", "72") } }
+            val session = GameSession(store).apply { select(language) }
             val scene = ImageComposeScene(360 * 2, 700 * 2, Density(2f)) { KolonaApp(session) }
             scene.tap(360f, primaryButtonY(scene.frame()))
             val rows = primaryButtonRows(scene.frame())

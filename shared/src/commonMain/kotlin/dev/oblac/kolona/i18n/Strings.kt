@@ -48,6 +48,7 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     Italy("Italija", "Italy", "Italie", "Italia"),
     ActiveLanguage("JEZIK IGRE", "GAME LANGUAGE", "LANGUE DU JEU", "LINGUA DEL GIOCO"),
     Record("NAJBOLJE SAČUVANO", "BEST RESCUE", "MEILLEUR SAUVETAGE", "IL TUO RECORD"),
+    CityBest("REKORD", "BEST", "RECORD", "RECORD"),
     NoRecord("Tvoja prva šetnja čeka.", "Your first march awaits.", "Ta première marche t’attend.", "Il tuo primo corteo ti aspetta."),
     Back("NAZAD", "BACK", "RETOUR", "INDIETRO"),
     GuideTitle("Zauzmi položaj.\nSačuvaj ljude.", "Take your position.\nProtect your people.", "Prends position.\nProtège les tiens.", "Prendi posizione.\nProteggi i tuoi."),
