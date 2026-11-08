@@ -1478,23 +1478,29 @@ internal fun DrawScope.city(paint: MapPaint, measurer: TextMeasurer? = null, vis
     }
 }
 
-private fun DrawScope.person(p: Vec2, coat: Color, id: Int, step: Float, sign: Boolean = false) {
+/** Marchers sway and bob a little, each out of step with the others, so a stopped march still looks alive. */
+internal fun marcherWiggle(time: Float, id: Int) = Offset(sin(time * 2.4f + id * 1.3f) * 2f, -abs(sin(time * 3.6f + id * 2.7f)) * 1.5f)
+
+// The feet stay on the ground; the hips, the body, and the sign take the [wiggle].
+internal fun DrawScope.person(p: Vec2, coat: Color, id: Int, step: Float, sign: Boolean = false, wiggle: Offset = Offset.Zero) {
     translate(p.x, p.y) {
         val walk = sin(step) * 2.7f
         drawOval(Palette.Deep.copy(alpha = .35f), Offset(-6f, 5f), Size(15f, 7f))
-        drawLine(Palette.Ink, Offset(-3f, 2f), Offset(-3f + walk, 9f), 3.5f, StrokeCap.Round)
-        drawLine(Palette.Ink, Offset(3f, 2f), Offset(3f - walk, 9f), 3.5f, StrokeCap.Round)
-        drawLine(coat, Offset(-5f, -4f), Offset(-8f, 2f), 3.5f, StrokeCap.Round)
-        drawLine(coat, Offset(5f, -4f), Offset(8f, 1f), 3.5f, StrokeCap.Round)
-        round(-5f, -8f, 10f, 12f, coat)
-        if (id % 6 == 4) drawPath(Path().apply { moveTo(-5f, -1f); lineTo(-8f, 7f); lineTo(8f, 7f); lineTo(5f, -1f); close() }, coat)
-        drawCircle(skins[id % skins.size], 4.8f, Offset(0f, -11f))
-        round(-4.5f, -16f, 9f, 4f, if (id % 3 == 0) Color(0xFFB59A69) else Color(0xFF3C3934), 2f)
-        if (sign) {
-            drawLine(Color(0xFFB1A17C), Offset(7f, -1f), Offset(7f, -33f), 1.5f)
-            round(-5f, -34f, 27f, 14f, Palette.Cream, 1f)
-            drawLine(Palette.Ground, Offset(0f, -29f), Offset(17f, -29f), 2f)
-            drawLine(Color(0xFFB36D5B), Offset(3f, -25f), Offset(14f, -25f), 2f)
+        drawLine(Palette.Ink, Offset(-3f, 2f) + wiggle, Offset(-3f + walk, 9f), 3.5f, StrokeCap.Round)
+        drawLine(Palette.Ink, Offset(3f, 2f) + wiggle, Offset(3f - walk, 9f), 3.5f, StrokeCap.Round)
+        translate(wiggle.x, wiggle.y) {
+            drawLine(coat, Offset(-5f, -4f), Offset(-8f, 2f), 3.5f, StrokeCap.Round)
+            drawLine(coat, Offset(5f, -4f), Offset(8f, 1f), 3.5f, StrokeCap.Round)
+            round(-5f, -8f, 10f, 12f, coat)
+            if (id % 6 == 4) drawPath(Path().apply { moveTo(-5f, -1f); lineTo(-8f, 7f); lineTo(8f, 7f); lineTo(5f, -1f); close() }, coat)
+            drawCircle(skins[id % skins.size], 4.8f, Offset(0f, -11f))
+            round(-4.5f, -16f, 9f, 4f, if (id % 3 == 0) Color(0xFFB59A69) else Color(0xFF3C3934), 2f)
+            if (sign) rotate(wiggle.x * 4f, pivot = Offset(7f, -1f)) {
+                drawLine(Color(0xFFB1A17C), Offset(7f, -1f), Offset(7f, -33f), 1.5f)
+                round(-5f, -34f, 27f, 14f, Palette.Cream, 1f)
+                drawLine(Palette.Ground, Offset(0f, -29f), Offset(17f, -29f), 2f)
+                drawLine(Color(0xFFB36D5B), Offset(3f, -25f), Offset(14f, -25f), 2f)
+            }
         }
     }
 }
@@ -1634,10 +1640,10 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
             }
             engine.people.filter { it.alive && !it.arrived }.sortedBy { it.position.y }.forEach { p ->
                 person(p.position, if (p.hit > 0) Palette.Cream else coats[p.id % coats.size], p.id,
-                    if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.id % 11 == 0)
+                    if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.id % 11 == 0, marcherWiggle(engine.elapsed, p.id))
             }
             engine.people.firstOrNull { it.alive && !it.arrived }?.let { lead ->
-                val p = lead.position.offset() + Offset(0f, -49f)
+                val p = lead.position.offset() + Offset(0f, -49f) + marcherWiggle(engine.elapsed, lead.id)
                 round(p.x - 42, p.y - 8, 84f, 16f, Palette.Cream, 2f)
                 label(measurer, strings[Copy.Banner], p, Palette.Ground, 7f)
             }
