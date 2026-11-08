@@ -40,7 +40,7 @@ First beta. Play a march in Belgrade, Paris and Milan. Try the four languages wi
 
 ### Notes for Beta App Review
 
-No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE MARCH. Tap the street to move the defender. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure leaves the map, with no blood. The game works offline and collects no data.
+No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE MARCH. Tap the street to move the defender. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
 
 ## App icon
 

@@ -187,4 +187,38 @@ class GameEngineTest {
         assertEquals(a.enemies.map { it.position }, b.enemies.map { it.position })
         assertEquals(a.survivors, b.survivors)
     }
+
+    // A beaten person falls and lies on the map for a moment; only then does the body go.
+    @Test fun aBeatenEnemyFallsWhereItStoodThenLeaves() {
+        val game = game()
+        val spot = street(game, 120f, 0f)
+        game.enemies += Enemy(900, EnemyKind.Police, spot).apply { health = 0 }
+        advance(game, 1f / 60)
+        assertTrue(game.enemies.isEmpty())
+        assertEquals(1, game.defended)
+        val body = game.fallen.single()
+        assertEquals(EnemyKind.Police, body.kind)
+        assertEquals(spot, body.position)
+        advance(game, GameEngine.FALL_SECONDS + .1f)
+        assertTrue(game.fallen.isEmpty())
+    }
+
+    @Test fun aKilledMarcherFallsOnce() {
+        val game = game()
+        game.people[5].health = 0
+        advance(game, GameEngine.FALL_SECONDS / 2)
+        val body = game.fallen.single()
+        assertNull(body.kind)
+        assertEquals(5, body.id)
+        advance(game, GameEngine.FALL_SECONDS / 2 + .1f)
+        assertTrue(game.fallen.isEmpty())
+    }
+
+    @Test fun aBeatenCarLeavesNoBody() {
+        val game = game()
+        game.enemies += Enemy(901, EnemyKind.Car, street(game, 120f, 0f)).apply { health = 0 }
+        advance(game, 1f / 60)
+        assertTrue(game.enemies.isEmpty())
+        assertTrue(game.fallen.isEmpty())
+    }
 }

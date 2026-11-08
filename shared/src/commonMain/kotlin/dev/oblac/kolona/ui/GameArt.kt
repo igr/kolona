@@ -1542,7 +1542,7 @@ internal fun DrawScope.defender(position: Offset, barricade: Float, step: Float 
 }
 
 private fun DrawScope.enemy(enemy: Enemy, measurer: TextMeasurer) {
-    val color = when (enemy.kind) { EnemyKind.Thug -> Palette.Red; EnemyKind.Police -> Color(0xFF8FB4D1); EnemyKind.Car -> Color(0xFFE9AD6F) }
+    val color = enemyColor(enemy.kind)
     val p = enemy.position.offset()
     if (enemy.warning > 0) {
         drawCircle(color.copy(alpha = .3f + .25f * sin(enemy.age * 12)), 28f + enemy.warning * 10, p, style = Stroke(2f))
@@ -1559,18 +1559,40 @@ private fun DrawScope.enemy(enemy: Enemy, measurer: TextMeasurer) {
             round(p.x + 19, p.y - 11, 3f, 7f, Palette.Gold, 1f)
             round(p.x + 19, p.y + 4, 3f, 7f, Palette.Gold, 1f)
         }
-    } else {
-        person(enemy.position, if (enemy.hit > 0) Palette.Cream else if (enemy.kind == EnemyKind.Thug) Color(0xFF735458) else Color(0xFF547D9C), enemy.id, enemy.age * 11)
-        round(p.x - 7, p.y - 17, 14f, 7f, Palette.Ink, 3f)
-        if (enemy.kind == EnemyKind.Police) {
-            round(p.x + 4, p.y - 3, 13f, 18f, color, 3f)
-            drawLine(Palette.Ink, p + Offset(7f, 4f), p + Offset(14f, 4f), 2f)
-        } else drawLine(Color(0xFFC7AC86), p + Offset(8f, -1f), p + Offset(16f, -23f), 4f, StrokeCap.Round)
-    }
+    } else enemyPerson(enemy.kind, enemy.position, enemy.id, enemy.age * 11, enemy.hit > 0)
     if (enemy.health < enemy.kind.health) {
         round(p.x - 12, p.y - 28, 24f, 3f, Palette.Ink, 1f)
         round(p.x - 12, p.y - 28, 24f * max(0, enemy.health) / enemy.kind.health, 3f, color, 1f)
     }
+}
+
+private fun enemyColor(kind: EnemyKind) = when (kind) { EnemyKind.Thug -> Palette.Red; EnemyKind.Police -> Color(0xFF8FB4D1); EnemyKind.Car -> Color(0xFFE9AD6F) }
+
+private fun DrawScope.enemyPerson(kind: EnemyKind, position: Vec2, id: Int, step: Float, hit: Boolean) {
+    val p = position.offset()
+    person(position, if (hit) Palette.Cream else if (kind == EnemyKind.Thug) Color(0xFF735458) else Color(0xFF547D9C), id, step)
+    round(p.x - 7, p.y - 17, 14f, 7f, Palette.Ink, 3f)
+    if (kind == EnemyKind.Police) {
+        round(p.x + 4, p.y - 3, 13f, 18f, enemyColor(kind), 3f)
+        drawLine(Palette.Ink, p + Offset(7f, 4f), p + Offset(14f, 4f), 2f)
+    } else drawLine(Color(0xFFC7AC86), p + Offset(8f, -1f), p + Offset(16f, -23f), 4f, StrokeCap.Round)
+}
+
+private val fadePaint = Paint()
+
+/** A beaten person flashes, tips over, lies still, and fades out within [GameEngine.FALL_SECONDS]. */
+internal fun DrawScope.fallen(body: Fallen) {
+    val tip = (body.age / .3f).coerceAtMost(1f)
+    val angle = (if (body.id % 2 == 0) 90f else -90f) * (1 - (1 - tip) * (1 - tip))
+    val fade = ((GameEngine.FALL_SECONDS - body.age) / .5f).coerceIn(0f, 1f)
+    val hit = body.age < .12f
+    val feet = body.position.offset() + Offset(0f, 9f)
+    if (fade < 1f) drawIntoCanvas { it.saveLayer(Rect(feet, 60f), fadePaint.apply { alpha = fade }) }
+    rotate(angle, feet) {
+        if (body.kind == null) person(body.position, if (hit) Palette.Cream else coats[body.id % coats.size], body.id, 0f, body.id % 11 == 0)
+        else enemyPerson(body.kind, body.position, body.id, 0f, hit)
+    }
+    if (fade < 1f) drawIntoCanvas { it.restore() }
 }
 
 // The preview seed is fixed, so each city's preview map is generated once.
@@ -1638,6 +1660,7 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                     drawLine(Palette.Gold, it.offset() - Offset(0f, 18f), it.offset() + Offset(0f, 18f), 1f)
                 }
             }
+            engine.fallen.forEach { fallen(it) }
             engine.people.filter { it.alive && !it.arrived }.sortedBy { it.position.y }.forEach { p ->
                 person(p.position, if (p.hit > 0) Palette.Cream else coats[p.id % coats.size], p.id,
                     if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.id % 11 == 0, marcherWiggle(engine.elapsed, p.id))

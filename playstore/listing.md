@@ -62,7 +62,7 @@ First beta. Play a march in Belgrade, Paris and Milan. Try the four languages wi
 |---|---|
 | App access | All functionality is available without special access. |
 | Ads | No, the app has no ads. |
-| Content rating | Category: Game. Violence: yes, cartoon violence against human characters (police and thugs), with no blood; a beaten character leaves the map. Answer "No" to every other question. Expect PEGI 12 / ESRB Everyone 10+. |
+| Content rating | Category: Game. Violence: yes, cartoon violence against human characters (police and thugs), with no blood; a beaten character falls over and fades away. Answer "No" to every other question. Expect PEGI 12 / ESRB Everyone 10+. |
 | Target audience | 13 and older. Younger age groups add the Families policy. |
 | Data safety | The app does not collect or share any user data. The language, the city and the best rescues stay on the device. |
 | Advertising ID | No. |

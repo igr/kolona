@@ -21,6 +21,7 @@ class Marcher(val id: Int, val row: Int, val offset: Float, var position: Vec2) 
     var health = 3
     var arrived = false
     var hit = 0f
+    var fell = false
     val alive get() = health > 0
 }
 class Enemy(val id: Int, val kind: EnemyKind, var position: Vec2) {
@@ -35,6 +36,8 @@ class Enemy(val id: Int, val kind: EnemyKind, var position: Vec2) {
 class Shot(var position: Vec2, val target: Enemy) { var life = 0.8f }
 class Bomb(val origin: Vec2, val target: Vec2) { var age = 0f }
 class Effect(val position: Vec2, val blast: Boolean = false) { var life = if (blast) .6f else .3f }
+/** A beaten person stays on the map for [GameEngine.FALL_SECONDS], so the screen can show the fall. A marcher has no [kind]. */
+class Fallen(val position: Vec2, val id: Int, val kind: EnemyKind?) { var age = 0f }
 
 data class GameConfig(
     val marchSeconds: Float = 150f,
@@ -72,6 +75,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
     val shots = mutableListOf<Shot>()
     val bombs = mutableListOf<Bomb>()
     val effects = mutableListOf<Effect>()
+    val fallen = mutableListOf<Fallen>()
     var status = GameStatus.Playing
         private set
     var elapsed = 0f
@@ -222,6 +226,10 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         }
         bombs.removeAll { it.age >= .6f }
         shots.removeAll { it.life <= 0 }
+        fallen.forEach { it.age += dt }
+        fallen.removeAll { it.age >= FALL_SECONDS }
+        enemies.forEach { if (it.health <= 0 && it.kind != EnemyKind.Car) fallen += Fallen(it.position, it.id, it.kind) }
+        people.forEach { if (!it.alive && !it.fell) { it.fell = true; fallen += Fallen(it.position, it.id, null) } }
         defended += enemies.count { it.health <= 0 }
         enemies.removeAll { it.health <= 0 }
         effects.forEach { it.life -= dt }
@@ -257,6 +265,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         const val MIN_SURVIVORS = 36
         const val FIRE_RANGE = 285f
         const val BOMB_RADIUS = 110f
+        const val FALL_SECONDS = 1.2f
 
         private fun move(start: Vec2, path: MutableList<Vec2>, distance: Float): Vec2 {
             var point = start
