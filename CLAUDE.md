@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Protest Defender** is a portrait escort-defense game: the player guards a protest march through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon.
+**Protest Defender** is a portrait escort-defense game: the player guards a protest on its way through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon.
 
 ## Commands
 
@@ -38,7 +38,7 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
 - Saved preference keys: `language`, `city`, `city.language`, `best.<city code>` (the legacy `best` belongs to Belgrade). City codes are saved, so never rename one.
 - Text style:
   - Map labels always use local names, in every language.
-  - French uses "tu" and "cortège" for the march. Italian uses "tu" and "corteo".
+  - The crowd is the protest in every language, never a march or a column: "protest" and "demonstranti" (sr, masculine), "the protest" and "protesters" (en), "la manif" and "manifestants" (fr), "la protesta" and "manifestanti" (it). French and Italian use "tu".
   - Use only glyphs present in both bundled fonts (`shared/src/commonMain/composeResources/font/`). U+202F is missing, and "→" exists only in DM Sans.
 
 ## Adding a new city (and country)

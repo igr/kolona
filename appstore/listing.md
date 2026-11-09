@@ -7,7 +7,7 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 | Field | Value |
 |---|---|
 | Name (16/30) | Protest Defender |
-| Subtitle (28/30) | Lead the march to the square |
+| Subtitle (30/30) | Lead the protest to the square |
 | Bundle ID | dev.oblac.kolona |
 | SKU | kolona |
 | Primary language | English (U.S.) |
@@ -19,7 +19,7 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 | Support URL | https://igr.github.io/kolona/ |
 | Privacy Policy URL | https://igr.github.io/kolona/privacy.html |
 
-The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender: March".
+The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender Game".
 
 ## TestFlight
 
@@ -30,17 +30,17 @@ The name under the icon on the phone is also "Protest Defender"; the home screen
 | Sign-in required | No |
 | Beta App Review contact | Your name, phone and email. |
 
-### Beta App Description (313/4000)
+### Beta App Description (307/4000)
 
-Protest Defender is a portrait action game. Guard a protest march of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and tap a group of attackers to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
+Protest Defender is a portrait action game. Guard a protest of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and tap a group of attackers to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
 
-### What to Test (274/4000)
+### What to Test (273/4000)
 
-First beta. Play a march in Belgrade, Paris and Milan. Try the four languages with the globe button in the main menu (pause the game and tap MAIN MENU) or with the language box in the city dialog. Tell us what felt too hard or too easy, and what looked wrong on your device.
+First beta. Play a game in Belgrade, Paris and Milan. Try the four languages with the globe button in the main menu (pause the game and tap MAIN MENU) or with the language box in the city dialog. Tell us what felt too hard or too easy, and what looked wrong on your device.
 
 ### Notes for Beta App Review
 
-No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE MARCH. Tap the street to move the defender. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
+No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE PROTEST. Tap the street to move the defender. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
 
 ## App icon
 

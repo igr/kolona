@@ -16,22 +16,22 @@ Basic information for the first beta, on the internal testing track. Copy these 
 | Website | https://igr.github.io/kolona/ |
 | Privacy policy | https://igr.github.io/kolona/privacy.html |
 
-The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender: March".
+The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender Game".
 
-## Short description (76/80)
+## Short description (75/80)
 
-Guard a protest march through Belgrade, Paris and Milan to the final square.
+Guard a protest on its way through Belgrade, Paris and Milan to the square.
 
-## Full description (1286/4000)
+## Full description (1285/4000)
 
 72 people. One road to freedom. You stand between them and chaos.
 
-Protest Defender is a portrait action game. A protest march walks through a real city, from one square to the next, and you are its guardian.
+Protest Defender is a portrait action game. A protest moves through a real city, from one square to the next, and you are its guardian.
 
-- Tap the street to move. Your defender finds a way around the buildings. Markers at the edge of the screen show where the march and the threats are.
+- Tap the street to move. Your defender finds a way around the buildings. Markers at the edge of the screen show where the protest and the threats are.
 - Stop to raise a barricade and fire automatically at threats in range. You cannot fire while running.
-- Tap a group of four or more attackers to throw a bomb. Bombs never hurt the marchers.
-- Thugs, police and cars come in waves. The march stops for two speeches; hold the line until it moves on.
+- Tap a group of four or more attackers to throw a bomb. Bombs never hurt the protesters.
+- Thugs, police and cars come in waves. The protest stops for two speeches; hold the line until it moves on.
 - Get at least 36 of the 72 people to the final square.
 
 Three cities, three real routes:
@@ -39,7 +39,7 @@ Three cities, three real routes:
 - Paris: from République through Bastille to Nation.
 - Milan: from Porta Venezia through San Babila to Piazza del Duomo.
 
-Every march draws a new map with real street names, landmarks and street life: a pljeskavica grill and a brass band in Belgrade, a crêpe stand and an accordion player in Paris, a gelato stand and a row of scooters in Milan. Win, and you take home a souvenir postcard.
+Every game draws a new map with real street names, landmarks and street life: a pljeskavica grill and a brass band in Belgrade, a crêpe stand and an accordion player in Paris, a gelato stand and a row of scooters in Milan. Win, and you take home a souvenir postcard.
 
 Play in English, Serbian, French or Italian.
 
@@ -52,9 +52,9 @@ No ads. No accounts. No data collected.
 | Track | Internal testing. Add up to 100 testers by email list. |
 | Release name | 0.1.0 (1) |
 
-### Release notes (274/500)
+### Release notes (273/500)
 
-First beta. Play a march in Belgrade, Paris and Milan. Try the four languages with the globe button in the main menu (pause the game and tap MAIN MENU) or with the language box in the city dialog. Tell us what felt too hard or too easy, and what looked wrong on your device.
+First beta. Play a game in Belgrade, Paris and Milan. Try the four languages with the globe button in the main menu (pause the game and tap MAIN MENU) or with the language box in the city dialog. Tell us what felt too hard or too easy, and what looked wrong on your device.
 
 ## App content
 

@@ -118,12 +118,12 @@ class CityFlowTest {
         return best
     }
 
-    @Test fun defendTheMarchOnTheMenuAsksForTheCityFirst() {
+    @Test fun defendTheProtestOnTheMenuAsksForTheCityFirst() {
         val session = GameSession(MemoryPreferenceStore()).apply { screen = Screen.Menu }
         val scene = ImageComposeScene(720, 1740, Density(2f)) { KolonaApp(session) }
         scene.tap(360f, primaryButtonY(scene.frame()))
         scene.frame()
-        assertEquals(Screen.Menu, session.screen, "Defend the march must open the city dialog")
+        assertEquals(Screen.Menu, session.screen, "Defend the protest must open the city dialog")
         session.selectCity(City.Paris)
         scene.tap(360f, primaryButtonY(scene.frame()))
         scene.frame()
