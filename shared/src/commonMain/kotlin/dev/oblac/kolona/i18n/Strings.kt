@@ -69,7 +69,6 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     Restart("POČNI PONOVO", "START AGAIN", "RECOMMENCER", "RICOMINCIA"),
     ReturnMenu("GLAVNI MENI", "MAIN MENU", "MENU PRINCIPAL", "MENU PRINCIPALE"),
     InMarch("NA PROTESTU", "PROTESTERS", "MANIFESTANTS", "MANIFESTANTI"),
-    Defended("ODBRANJENO", "DEFENDED", "REPOUSSÉS", "RESPINTI"),
     Route("DO TRGA", "TO THE SQUARE", "VERS LA PLACE", "VERSO LA PIAZZA"),
     Speech("GOVOR", "SPEECH", "DISCOURS", "DISCORSO"),
     Prepare("PRIPREMI ODBRANU", "PREPARE YOUR DEFENSE", "PRÉPARE TA DÉFENSE", "PREPARA LA DIFESA"),

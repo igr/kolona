@@ -62,11 +62,6 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                         Text(" / 72", Modifier.padding(bottom = 2.dp), Palette.Faint, fontSize = 11.sp)
                     }
                 }
-                Spacer(Modifier.width(15.dp))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(strings[Copy.Defended], color = Palette.Faint, fontSize = 8.sp, letterSpacing = .5.sp)
-                    Display(engine.defended.toString(), 29, Palette.Gold)
-                }
                 Spacer(Modifier.width(10.dp))
                 Box(Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, Palette.Line, RoundedCornerShape(8.dp))
                     .semantics { contentDescription = strings[Copy.Pause] }.clickable(role = Role.Button) { session.pause() }, contentAlignment = Alignment.Center) {
@@ -156,8 +151,7 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                         }
                         Text(strings[Copy.Saved], Modifier.fillMaxWidth(), Palette.Faint, fontSize = 9.sp, letterSpacing = 1.5.sp, textAlign = TextAlign.Center)
                         Spacer(Modifier.height(23.dp * gap))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            Stat(engine.defended.toString(), strings[Copy.Defended])
+                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Stat(formatTime(engine.elapsed), strings[Copy.Time])
                         }
                         if (won) {
