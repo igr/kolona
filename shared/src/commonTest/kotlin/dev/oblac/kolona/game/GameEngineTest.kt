@@ -108,6 +108,19 @@ class GameEngineTest {
         assertEquals(0f, game.bombCooldown)
     }
 
+    // Two attackers on one spot look like one, so four would pass for three and draw a bomb.
+    @Test fun attackersNeverStandOnTopOfEachOther() {
+        val game = GameEngine(3)
+        repeat(90 * 60) {
+            game.advance(1f / 60)
+            game.enemies.forEachIndexed { i, a ->
+                game.enemies.drop(i + 1).forEach { b ->
+                    assertTrue(a.position.distanceTo(b.position) >= 2f, "Attackers ${a.id} and ${b.id} stand on one spot at ${a.position} after ${game.elapsed} s")
+                }
+            }
+        }
+    }
+
     @Test fun threeEnemiesAreAMoveCommandAndWarningEnemiesDoNotQualify() {
         val game = game()
         val p = farSpot(game)

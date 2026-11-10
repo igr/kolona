@@ -212,6 +212,18 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
                 victims.forEach { if (it.alive) { it.health--; it.hit = .25f; shake = max(shake, 3f) } }
             }
         }
+        // Attackers keep about a body's width apart: two on one spot look like one, so four would pass for three.
+        for (i in enemies.indices) for (j in i + 1 until enemies.size) {
+            val a = enemies[i]
+            val b = enemies[j]
+            val apart = (a.kind.radius + b.kind.radius) * .6f
+            val gap = a.position.distanceTo(b.position)
+            if (gap >= apart) continue
+            val away = if (gap > .01f) (a.position - b.position) * (1f / gap) else Vec2(1f, 0f)
+            val push = away * ((apart - gap) / 2)
+            if (!map.blocked(a.position + push)) a.position += push
+            if (!map.blocked(b.position - push)) b.position -= push
+        }
         shots.forEach { shot ->
             shot.life -= dt
             val direction = shot.target.position - shot.position
@@ -263,8 +275,14 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             origin = map.nearestWalkable(Vec2(if (target.x < map.width / 2) map.width - 30 else 30f, target.y))
         }
         val count = if (kind == EnemyKind.Car) random.nextInt(1, 3) else if (random.nextFloat() < .4f) 1 else random.nextInt(4, 7)
+        // As in the original, each attacker takes a spot of its own. Two on one spot look like one, so four would pass for three.
+        val taken = mutableListOf<Vec2>()
         repeat(count) {
-            val p = map.nearestWalkable(origin + Vec2(random.nextFloat() * 55 - 27, random.nextFloat() * 55 - 27))
+            val wanted = origin + Vec2(random.nextFloat() * 55 - 27, random.nextFloat() * 55 - 27)
+            val p = AROUND.asSequence().map { wanted + it }.firstOrNull { q ->
+                q.x in 20f..map.width - 20f && q.y in 20f..map.height - 20f && !map.blocked(q, 14f) && taken.none { it.distanceTo(q) < 12f }
+            } ?: map.nearestWalkable(wanted)
+            taken += p
             enemies += Enemy(nextEnemyId++, kind, p)
         }
     }
@@ -274,6 +292,8 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         const val FIRE_RANGE = 285f
         const val BOMB_RADIUS = 110f
         const val FALL_SECONDS = 1.2f
+        // Spots around a wanted one, nearest first: 6 units apart, up to 60 away.
+        private val AROUND = (-10..10).flatMap { i -> (-10..10).map { j -> Vec2(i * 6f, j * 6f) } }.filter { it.length() <= 60f }.sortedBy { it.length() }
 
         private fun move(start: Vec2, path: MutableList<Vec2>, distance: Float): Vec2 {
             var point = start
