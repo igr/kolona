@@ -1487,15 +1487,15 @@ private val shoutTail = Path().apply { moveTo(-4f, -5.5f); lineTo(0f, 0f); lineT
 internal fun DrawScope.shout(measurer: TextMeasurer, text: String, head: Offset, age: Float, tilt: Float) {
     val alpha = min(min(1f, age * 12f), (SHOUT_SECONDS - age) / .4f)
     if (alpha <= 0f) return
-    val layout = measurer.measure(text, TextStyle(fontSize = (9f / density).sp, fontWeight = FontWeight.Bold))
-    val width = layout.size.width + 10f
-    val height = layout.size.height + 3f
+    val layout = measurer.measure(text, TextStyle(fontSize = (11f / density).sp, fontWeight = FontWeight.Bold))
+    val width = layout.size.width + 12f
+    val height = layout.size.height + 4f
     val top = head.y - 5f - height
     val pop = 1f + .3f * exp(-age * 9f) * cos(age * 26f)
     withTransform({ rotate(tilt, head); scale(pop, pop, head) }) {
         drawRoundRect(Palette.Cream, Offset(head.x - width / 2, top), Size(width, height), CornerRadius(4f), alpha = alpha)
         translate(head.x, head.y) { drawPath(shoutTail, Palette.Cream, alpha = alpha) }
-        drawText(layout, Palette.Ground, Offset(head.x - layout.size.width / 2, top + 1.5f), alpha = alpha)
+        drawText(layout, Palette.Ground, Offset(head.x - layout.size.width / 2, top + 2f), alpha = alpha)
     }
 }
 
