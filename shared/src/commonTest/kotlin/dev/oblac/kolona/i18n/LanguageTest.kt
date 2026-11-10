@@ -32,10 +32,18 @@ class LanguageTest {
     }
 
     @Test fun stringsFollowTheirLanguage() {
-        assertEquals("WE KEEP GOING", Strings(Language.English)[Copy.Banner])
-        assertEquals("NE ODUSTAJEMO", Strings(Language.Serbian)[Copy.Banner])
-        assertEquals("ON NE LÂCHE RIEN", Strings(Language.French)[Copy.Banner])
-        assertEquals("NON MOLLIAMO", Strings(Language.Italian)[Copy.Banner])
+        assertEquals("WE KEEP GOING", Strings(Language.English)[Copy.ShoutKeepGoing])
+        assertEquals("NE ODUSTAJEMO", Strings(Language.Serbian)[Copy.ShoutKeepGoing])
+        assertEquals("ON NE LÂCHE RIEN", Strings(Language.French)[Copy.ShoutKeepGoing])
+        assertEquals("NON MOLLIAMO", Strings(Language.Italian)[Copy.ShoutKeepGoing])
+    }
+
+    // French puts a space before the exclamation marks, as in "GARE AUX VOITURES !".
+    @Test fun aShoutEndsInExclamationMarks() {
+        assertEquals("FREEDOM!", Strings(Language.English).shout(Copy.ShoutFreedom, 1))
+        assertEquals("SLOBODA!!", Strings(Language.Serbian).shout(Copy.ShoutFreedom, 2))
+        assertEquals("LIBERTÉ !!!", Strings(Language.French).shout(Copy.ShoutFreedom, 3))
+        assertEquals("LIBERTÀ!!", Strings(Language.Italian).shout(Copy.ShoutFreedom, 2))
     }
 
     @Test fun souvenirLineNamesTheCityOfTheGame() {

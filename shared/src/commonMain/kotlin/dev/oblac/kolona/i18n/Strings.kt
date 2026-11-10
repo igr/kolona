@@ -89,7 +89,16 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     Crowd("PROTEST", "PROTEST", "MANIF", "PROTESTA"),
     Threat("PRETNJA", "THREAT", "MENACE", "MINACCIA"),
     You("TI", "YOU", "TOI", "TU"),
-    Banner("NE ODUSTAJEMO", "WE KEEP GOING", "ON NE LÂCHE RIEN", "NON MOLLIAMO"),
+    ShoutKeepGoing("NE ODUSTAJEMO", "WE KEEP GOING", "ON NE LÂCHE RIEN", "NON MOLLIAMO"),
+    ShoutSystem("BORBA PROTIV SISTEMA", "FIGHT THE SYSTEM", "COMBATTONS LE SYSTÈME", "LOTTA AL SISTEMA"),
+    ShoutCorruption("DOLE KORUPCIJA", "DOWN WITH CORRUPTION", "À BAS LA CORRUPTION", "ABBASSO LA CORRUZIONE"),
+    ShoutTerror("KRAJ TERORA", "END THE TERROR", "FIN DE LA TERREUR", "FINE DEL TERRORE"),
+    ShoutPeace("HOĆEMO MIR", "BRING PEACE", "ON VEUT LA PAIX", "VOGLIAMO LA PACE"),
+    ShoutJustice("PRAVDA ZA SVE", "JUSTICE FOR ALL", "JUSTICE POUR TOUS", "GIUSTIZIA PER TUTTI"),
+    ShoutLies("DOSTA LAŽI", "NO MORE LIES", "ASSEZ DE MENSONGES", "BASTA BUGIE"),
+    ShoutFear("NE BOJIMO SE", "WE ARE NOT AFRAID", "ON N’A PAS PEUR", "NON ABBIAMO PAURA"),
+    ShoutFreedom("SLOBODA", "FREEDOM", "LIBERTÉ", "LIBERTÀ"),
+    ShoutShame("SRAMOTA", "SHAME ON YOU", "HONTE À VOUS", "VERGOGNA"),
     Thug("BATINAŠI", "THUGS", "VOYOUS", "PICCHIATORI"),
     Police("POLICIJA", "POLICE", "POLICE", "POLIZIA"),
     Cars("AUTOMOBILI", "CARS", "VOITURES", "AUTO"),
@@ -111,6 +120,10 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     Rotate("Igra se uspravno", "Play in portrait", "Joue en mode portrait", "Gioca in verticale"),
 }
 
+/** The protest shouts these in turn. */
+val slogans = listOf(Copy.ShoutKeepGoing, Copy.ShoutSystem, Copy.ShoutCorruption, Copy.ShoutTerror, Copy.ShoutPeace,
+    Copy.ShoutJustice, Copy.ShoutLies, Copy.ShoutFear, Copy.ShoutFreedom, Copy.ShoutShame)
+
 class Strings(val language: Language) {
     operator fun get(key: Copy) = when (language) {
         Language.English -> key.en
@@ -118,6 +131,10 @@ class Strings(val language: Language) {
         Language.French -> key.fr
         Language.Italian -> key.it
     }
+    // Made once, so a shout drawn every frame makes no new strings.
+    private val shouts by lazy { slogans.associateWith { copy -> (1..3).map { get(copy) + (if (language == Language.French) " " else "") + "!".repeat(it) } } }
+    /** A slogan as one protester shouts it, with one to three exclamation marks. */
+    fun shout(slogan: Copy, marks: Int) = shouts.getValue(slogan)[marks - 1]
     fun phase(index: Int) = get(listOf(Copy.Phase0, Copy.Phase1, Copy.Phase2, Copy.Phase3, Copy.Phase4, Copy.Phase5)[index.coerceIn(0, 5)])
     fun cityName(city: City) = get(when (city) { City.Belgrade -> Copy.Belgrade; City.Paris -> Copy.Paris; City.Milan -> Copy.Milan })
     fun country(city: City) = get(when (city) { City.Belgrade -> Copy.Serbia; City.Paris -> Copy.France; City.Milan -> Copy.Italy })

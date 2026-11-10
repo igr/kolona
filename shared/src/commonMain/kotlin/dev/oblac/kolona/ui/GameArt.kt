@@ -1459,6 +1459,46 @@ internal fun DrawScope.city(paint: MapPaint, measurer: TextMeasurer? = null, vis
     }
 }
 
+// A new shout starts every SHOUT_EVERY seconds and lasts SHOUT_SECONDS: it pops up while the one before fades out.
+internal const val SHOUT_EVERY = 1.8f
+internal const val SHOUT_SECONDS = 2.2f
+internal val Marcher.holdsSign get() = id % 11 == 0
+internal fun shoutSlogan(slot: Int) = slogans[slot.mod(slogans.size)]
+internal fun shoutMarks(slot: Int) = 1 + (mix(slot) ushr 16) % 3
+internal fun shoutTilt(slot: Int) = ((mix(slot) ushr 8) and 7) - 3.5f
+
+/** Who shouts in [slot]: a marcher without a sign, from the front half in an even slot and the back half in an odd one; -1 if nobody there can. */
+internal fun shoutSpeaker(people: List<Marcher>, slot: Int): Int {
+    val half = people.size / 2
+    val first = (slot and 1) * half
+    val start = (mix(slot) and 0xFFFF) % half
+    for (i in 0 until half) {
+        val index = first + (start + i) % half
+        val p = people[index]
+        if (p.alive && !p.arrived && !p.holdsSign) return index
+    }
+    return -1
+}
+
+// The bubble's tail, with its tip on the head. It meets the bubble but does not reach the text, so a fading shout fades evenly.
+private val shoutTail = Path().apply { moveTo(-4f, -5.5f); lineTo(0f, 0f); lineTo(4f, -5.5f); close() }
+
+/** The bubble pops up over the speaker's [head], tilted by [tilt] degrees, and fades out before the shout ends. */
+internal fun DrawScope.shout(measurer: TextMeasurer, text: String, head: Offset, age: Float, tilt: Float) {
+    val alpha = min(min(1f, age * 12f), (SHOUT_SECONDS - age) / .4f)
+    if (alpha <= 0f) return
+    val layout = measurer.measure(text, TextStyle(fontSize = (9f / density).sp, fontWeight = FontWeight.Bold))
+    val width = layout.size.width + 10f
+    val height = layout.size.height + 3f
+    val top = head.y - 5f - height
+    val pop = 1f + .3f * exp(-age * 9f) * cos(age * 26f)
+    withTransform({ rotate(tilt, head); scale(pop, pop, head) }) {
+        drawRoundRect(Palette.Cream, Offset(head.x - width / 2, top), Size(width, height), CornerRadius(4f), alpha = alpha)
+        translate(head.x, head.y) { drawPath(shoutTail, Palette.Cream, alpha = alpha) }
+        drawText(layout, Palette.Ground, Offset(head.x - layout.size.width / 2, top + 1.5f), alpha = alpha)
+    }
+}
+
 /** Marchers sway and bob a little, each out of step with the others, so a stopped march still looks alive. */
 internal fun marcherWiggle(time: Float, id: Int) = Offset(sin(time * 2.4f + id * 1.3f) * 2f, -abs(sin(time * 3.6f + id * 2.7f)) * 1.5f)
 
@@ -1622,14 +1662,15 @@ internal fun shakeOffset(shake: Float, time: Float): Offset {
 }
 
 // A hash of the frame number, in -1..1: no allocation in draw code, and the same jolts in every test run.
-private fun jolt(frame: Int): Float {
-    var x = frame * -0x61c88647
+private fun jolt(frame: Int) = (mix(frame) ushr 8) / 8388607.5f - 1f
+
+private fun mix(n: Int): Int {
+    var x = n * -0x61c88647
     x = x xor (x ushr 16)
     x *= 0x7feb352d
     x = x xor (x ushr 15)
     x *= -0x7b935975
-    x = x xor (x ushr 16)
-    return (x ushr 8) / 8388607.5f - 1f
+    return x xor (x ushr 16)
 }
 
 @Composable
@@ -1666,12 +1707,16 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
             engine.fallen.forEach { fallen(it) }
             engine.people.filter { it.alive && !it.arrived }.sortedBy { it.position.y }.forEach { p ->
                 person(p.position, if (p.hit > 0) Palette.Cream else coats[p.id % coats.size], p.id,
-                    if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.id % 11 == 0, marcherWiggle(engine.elapsed, p.id))
+                    if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.holdsSign, marcherWiggle(engine.elapsed, p.id))
             }
-            engine.people.firstOrNull { it.alive && !it.arrived }?.let { lead ->
-                val p = lead.position.offset() + Offset(0f, -49f) + marcherWiggle(engine.elapsed, lead.id)
-                round(p.x - 42, p.y - 8, 84f, 16f, Palette.Cream, 2f)
-                label(measurer, strings[Copy.Banner], p, Palette.Ground, 7f)
+            val newest = (engine.elapsed / SHOUT_EVERY).toInt()
+            for (slot in max(0, newest - 1)..newest) {
+                val speaker = shoutSpeaker(engine.people, slot)
+                if (speaker < 0) continue
+                val p = engine.people[speaker]
+                // The tail points just above the hat.
+                shout(measurer, strings.shout(shoutSlogan(slot), shoutMarks(slot)),
+                    p.position.offset() + marcherWiggle(engine.elapsed, p.id) + Offset(0f, -19f), engine.elapsed - slot * SHOUT_EVERY, shoutTilt(slot))
             }
             engine.enemies.forEach { enemy(it, measurer) }
             defender(engine.hero.position.offset(), if (engine.hero.moving) 0f else engine.hero.barricade,
