@@ -107,6 +107,16 @@ class MapRenderingTest {
         assertTrue(changed >= 30, "A hero on the flock changed only $changed pixels")
     }
 
+    // A fresh jolt every frame, never more than the shake in either direction, and none without a shake.
+    @Test
+    fun theViewShakesWithinTheShake() {
+        val jolts = (0 until 60).map { shakeOffset(9f, it / 60f) }
+        assertTrue(jolts.all { abs(it.x) <= 9f && abs(it.y) <= 9f }, "$jolts")
+        assertTrue(jolts.zipWithNext().all { (a, b) -> a != b }, "$jolts")
+        assertTrue(jolts.maxOf { abs(it.x) } > 6f && jolts.maxOf { abs(it.y) } > 6f, "$jolts")
+        assertEquals(Offset.Zero, shakeOffset(0f, 1f))
+    }
+
     @Test
     fun crosswalksStayOutsideTheSquares() {
         for (city in City.entries) for (scale in listOf(1f, 2f)) for (seed in 1..3) {

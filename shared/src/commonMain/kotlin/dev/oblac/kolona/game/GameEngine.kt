@@ -88,6 +88,9 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         private set
     var defended = 0
         private set
+    /** How far the screen jolts, in points, as in the original: a hit on the protest, a bomb blast, a wrecked car. Drawing only. */
+    var shake = 0f
+        private set
     private var speechIndex = 0
     private val spawnSeconds = config.spawnSeconds + (config.spawnSecondsAtMaxScale - config.spawnSeconds) *
         if (config.maxMapScale > 1f) ((map.scale - 1f) / (config.maxMapScale - 1f)).coerceIn(0f, 1f) else 0f
@@ -135,6 +138,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
 
     private fun update(dt: Float) {
         elapsed += dt
+        shake *= .9f
         bombCooldown = max(0f, bombCooldown - dt)
         if (speechRemaining > 0f) speechRemaining = max(0f, speechRemaining - dt)
         else {
@@ -205,7 +209,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             if (enemy.health > 0 && enemy.position.distanceTo(target.position) < enemy.kind.radius + 12f && enemy.attackCooldown <= 0f) {
                 enemy.attackCooldown = 1.1f
                 val victims = if (enemy.kind == EnemyKind.Car) active.filter { it.position.distanceTo(enemy.position) < 42f }.take(3) else listOf(target)
-                victims.forEach { if (it.alive) { it.health--; it.hit = .25f } }
+                victims.forEach { if (it.alive) { it.health--; it.hit = .25f; shake = max(shake, 3f) } }
             }
         }
         shots.forEach { shot ->
@@ -224,6 +228,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             if (bomb.age >= .6f) {
                 enemies.filter { it.position.distanceTo(bomb.target) <= BOMB_RADIUS }.forEach { it.health -= 14 }
                 effects += Effect(bomb.target, blast = true)
+                shake = max(shake, 9f)
             }
         }
         bombs.removeAll { it.age >= .6f }
@@ -231,6 +236,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         fallen.forEach { it.age += dt }
         fallen.removeAll { it.age >= FALL_SECONDS }
         enemies.forEach { if (it.health <= 0 && it.kind != EnemyKind.Car) fallen += Fallen(it.position, it.id, it.kind) }
+        if (enemies.any { it.health <= 0 && it.kind == EnemyKind.Car }) shake = max(shake, 5f)
         people.forEach { if (!it.alive && !it.fell) { it.fell = true; fallen += Fallen(it.position, it.id, null) } }
         defended += enemies.count { it.health <= 0 }
         enemies.removeAll { it.health <= 0 }

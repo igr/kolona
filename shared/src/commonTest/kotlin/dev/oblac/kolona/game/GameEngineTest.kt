@@ -246,6 +246,36 @@ class GameEngineTest {
         assertTrue(game.fallen.isEmpty())
     }
 
+    // As in the original: a bomb blast shakes the screen hardest, and the shake dies down within a second.
+    @Test fun aBombBlastShakesTheScreenThenItSettles() {
+        val game = game()
+        val p = farSpot(game)
+        repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
+        game.command(p)
+        while (game.bombs.isNotEmpty()) game.advance(1f / 60)
+        assertEquals(9f, game.shake)
+        advance(game, 1f)
+        assertTrue(game.shake < .1f, "The screen still shakes by ${game.shake}")
+    }
+
+    // The last row starts beyond the hero's fire range, so nothing stops the thug.
+    @Test fun aHitOnTheProtestShakesTheScreenALittle() {
+        val game = game()
+        val marcher = game.people.last()
+        game.enemies += Enemy(902, EnemyKind.Thug, marcher.position + Vec2(5f, 0f)).apply { warning = 0f }
+        assertEquals(0f, game.shake)
+        game.advance(1f / 60)
+        assertTrue(marcher.health < 3, "The thug did not hit")
+        assertEquals(3f, game.shake)
+    }
+
+    @Test fun aWreckedCarShakesTheScreen() {
+        val game = game()
+        game.enemies += Enemy(903, EnemyKind.Car, spot(game, 120f, 0f)).apply { health = 0 }
+        game.advance(1f / 60)
+        assertEquals(5f, game.shake)
+    }
+
     @Test fun aBeatenCarLeavesNoBody() {
         val game = game()
         game.enemies += Enemy(901, EnemyKind.Car, spot(game, 120f, 0f)).apply { health = 0 }

@@ -1614,6 +1614,24 @@ fun CityArtwork(city: City = City.Belgrade, modifier: Modifier = Modifier, hero:
     }
 }
 
+/** The world jolts up to [shake] points each way, to a new spot every game frame. */
+internal fun shakeOffset(shake: Float, time: Float): Offset {
+    if (shake <= 0f) return Offset.Zero
+    val frame = (time * 60f).roundToInt()
+    return Offset(jolt(frame), jolt(frame + 104_729)) * shake
+}
+
+// A hash of the frame number, in -1..1: no allocation in draw code, and the same jolts in every test run.
+private fun jolt(frame: Int): Float {
+    var x = frame * -0x61c88647
+    x = x xor (x ushr 16)
+    x *= 0x7feb352d
+    x = x xor (x ushr 15)
+    x *= -0x7b935975
+    x = x xor (x ushr 16)
+    return (x ushr 8) / 8388607.5f - 1f
+}
+
 @Composable
 fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revision: Int, modifier: Modifier) {
     // A frame lays out the street names plus the sprite labels; the default cache of 8 would miss every time.
@@ -1622,12 +1640,16 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
     Canvas(modifier) {
         @Suppress("UNUSED_VARIABLE") val frame = revision
         val scale = size.width / camera.viewWidth
+        // As in the original, only the map jolts: the edge markers hold still. A paused or finished game holds still too.
+        val jolt = shakeOffset(if (engine.status == GameStatus.Playing) engine.shake else 0f, engine.elapsed) * density
         withTransform({
+            translate(jolt.x, jolt.y)
             scale(scale, scale, Offset.Zero)
             translate(camera.viewWidth / 2 - camera.center.x, camera.viewHeight / 2 - camera.center.y)
         }) {
+            // The ground reaches past the view, so a jolt never shows a bare edge.
             city(paint, measurer, Rect(Offset(camera.center.x - camera.viewWidth / 2, camera.center.y - camera.viewHeight / 2),
-                Size(camera.viewWidth, camera.viewHeight)), engine.elapsed, engine.hero.position, engine.people)
+                Size(camera.viewWidth, camera.viewHeight)).inflate(16f), engine.elapsed, engine.hero.position, engine.people)
             if (!engine.hero.moving) drawCircle(Palette.Gold.copy(alpha = .045f), GameEngine.FIRE_RANGE, engine.hero.position.offset())
             if (engine.hero.moving) {
                 val path = Path().apply {
