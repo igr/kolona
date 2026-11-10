@@ -2,36 +2,71 @@ package dev.oblac.kolona.game
 
 import kotlin.math.*
 
-class Street(val name: String?, points: List<Vec2>, val width: Float) { val line = MarchRoute(points) }
-enum class SquareKind { Roundabout, Star, Round, Open }
+enum class SquareKind { Roundabout, Round, Open }
 data class Square(val name: String?, val center: Vec2, val radius: Float, val kind: SquareKind)
 data class MapLabel(val text: String, val position: Vec2, val angle: Float) // radians, already in -PI/2..PI/2
 
-/** Only street corridors and squares are walkable. Blocks between them are solid. */
-class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, val routeWidth: Float,
-                    val streets: List<Street>, val squares: List<Square>) {
+/** The map's one street: the march's route, widened into a square at each stop. Only the march keeps to it. */
+class Street(width: Float, height: Float, val route: MarchRoute, val routeWidth: Float, val squares: List<Square>) {
+    private val columns = ceil(width / RASTER).toInt()
+    private val rows = ceil(height / RASTER).toInt()
+    private val raster = FloatArray(columns * rows) { -30f }
+
+    init {
+        route.samples.zipWithNext { a, b -> stamp(a.position, b.position, routeWidth / 2) }
+        squares.forEach { stamp(it.center, it.center, it.radius) }
+    }
+
+    /** Distance to the street's edge: > 0 on the street, < 0 off it, clamped at -30. */
+    fun clearance(p: Vec2): Float =
+        raster[(p.y / RASTER).toInt().coerceIn(0, rows - 1) * columns + (p.x / RASTER).toInt().coerceIn(0, columns - 1)]
+
+    // Raise every raster cell near segment ab to its clearance in the corridor; farther cells stay at -30.
+    private fun stamp(a: Vec2, b: Vec2, halfWidth: Float) {
+        val reach = halfWidth + 30f
+        val dx = b.x - a.x
+        val dy = b.y - a.y
+        val lengthSquared = dx * dx + dy * dy
+        for (y in max(0, ((min(a.y, b.y) - reach) / RASTER).toInt())..min(rows - 1, ((max(a.y, b.y) + reach) / RASTER).toInt()))
+            for (x in max(0, ((min(a.x, b.x) - reach) / RASTER).toInt())..min(columns - 1, ((max(a.x, b.x) + reach) / RASTER).toInt())) {
+                val px = (x + .5f) * RASTER - a.x
+                val py = (y + .5f) * RASTER - a.y
+                val t = if (lengthSquared > 0f) ((px * dx + py * dy) / lengthSquared).coerceIn(0f, 1f) else 0f
+                val ex = px - dx * t
+                val ey = py - dy * t
+                val value = halfWidth - sqrt(ex * ex + ey * ey)
+                val i = y * columns + x
+                if (value > raster[i]) raster[i] = value
+            }
+    }
+
+    private companion object { const val RASTER = 5f }
+}
+
+/** People walk anywhere on the map, on the street or off it, but never through a building or a landmark, or off the map. */
+class Ground(val width: Float, val height: Float, buildings: List<Building>, landmarks: List<Landmark>, start: Vec2) {
     private val columns = ceil(width / CELL).toInt()
     private val rows = ceil(height / CELL).toInt()
     // The raster covers the grid exactly, so every cell center is also a raster cell center.
     private val rasterColumns = columns * (CELL / RASTER).toInt()
     private val rasterRows = rows * (CELL / RASTER).toInt()
-    private val raster = FloatArray(rasterColumns * rasterRows) { -30f }
-
-    init {
-        corridor(route, routeWidth / 2)
-        streets.forEach { corridor(it.line, it.width / 2) }
-        squares.forEach { stamp(it.center, it.center, it.radius) }
+    private val raster = FloatArray(rasterColumns * rasterRows) {
+        val x = (it % rasterColumns + .5f) * RASTER
+        val y = (it / rasterColumns + .5f) * RASTER
+        minOf(REACH, x, y, width - x, height - y)
     }
 
-    /** Distance to the walkable edge: > 0 inside, < 0 outside, clamped at -30. */
+    init {
+        buildings.forEach { stamp(it.position.x, it.position.y, it.position.x + it.width, it.position.y + it.height + Building.FRONT) }
+        landmarks.forEach { stamp(it.position.x, it.position.y, it.position.x + it.width, it.position.y + it.height) }
+    }
+
+    /** Distance to the nearest building, landmark, or map edge: < 0 inside a building, at most 30. */
     fun clearance(p: Vec2): Float = raster[(p.y / RASTER).toInt().coerceIn(0, rasterRows - 1) * rasterColumns +
         (p.x / RASTER).toInt().coerceIn(0, rasterColumns - 1)]
     fun blocked(p: Vec2, padding: Float = 12f): Boolean = clearance(p) < padding
 
-    private val walkable = BooleanArray(columns * rows) {
-        val center = center(it)
-        center.x in 0f..width && center.y in 0f..height && clearance(center) >= 17f
-    }
+    private val walkable = BooleanArray(columns * rows) { clearance(center(it)) >= 14f }
 
     // Geometry never changes. Cache legal edges instead of testing clearance in every enemy path search.
     private val neighbors = Array(walkable.size) { current ->
@@ -49,9 +84,8 @@ class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, 
         }.toIntArray()
     }
 
-    // A street the route cannot reach would trap anyone sent there, so it is not navigable.
+    // A yard walled in by buildings would trap anyone sent there, so only ground the route's start reaches is walkable.
     init {
-        val start = route.samples.first().position
         require(walkable[cellOf(start)]) { "The route starts at $start, which is not walkable, so nothing on the map is reachable" }
         val reached = flood(cellOf(start))
         for (i in walkable.indices) walkable[i] = walkable[i] && reached[i]
@@ -72,7 +106,7 @@ class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, 
     private val closed = BooleanArray(walkable.size)
     private val open = CellHeap()
 
-    /** A* with an admissible octile heuristic and no diagonal corner-cutting. */
+    /** A straight line when nothing stands in the way; otherwise A* over the cells, straightened. */
     fun path(from: Vec2, requested: Vec2): MutableList<Vec2> {
         val to = Vec2(requested.x.coerceIn(18f, width - 18f), requested.y.coerceIn(18f, height - 18f))
         if (segmentClear(from, to)) return mutableListOf(to)
@@ -93,16 +127,16 @@ class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, 
             val current = open.pop()
             if (closed[current]) continue
             if (current == end) {
-                val result = mutableListOf<Vec2>()
+                val cells = mutableListOf<Vec2>()
                 var cursor = end
                 while (cursor != start) {
-                    result.add(0, center(cursor))
+                    cells += center(cursor)
                     cursor = previous[cursor]
                 }
-                // Enter the start cell first if needed; do not cut through a block corner.
-                if (result.isEmpty() || !segmentClear(from, result.first())) result.add(0, center(start))
-                if (segmentClear(result.last(), to)) result += to
-                return result
+                cells += center(start)
+                cells.reverse()
+                if (segmentClear(cells.last(), to)) cells += to
+                return straighten(from, cells)
             }
             closed[current] = true
             for (next in neighbors[current]) {
@@ -120,26 +154,33 @@ class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, 
         return mutableListOf() // An unreachable destination must never teleport the hero.
     }
 
-    private fun corridor(line: MarchRoute, halfWidth: Float) {
-        line.samples.zipWithNext { a, b -> stamp(a.position, b.position, halfWidth) }
+    // Skips every corner the walker can cut in a clear straight line, so nobody zig-zags along the grid.
+    // From inside a building no line is clear, so the walker first steps out to the start cell.
+    private fun straighten(from: Vec2, points: List<Vec2>): MutableList<Vec2> {
+        val result = mutableListOf<Vec2>()
+        var anchor = from
+        var i = 0
+        while (i < points.size) {
+            var j = i
+            while (j + 1 < points.size && segmentClear(anchor, points[j + 1])) j++
+            result += points[j]
+            anchor = points[j]
+            i = j + 1
+        }
+        return result
     }
 
-    // Raise every raster cell near segment ab to its clearance in the corridor; farther cells stay at -30.
-    private fun stamp(a: Vec2, b: Vec2, halfWidth: Float) {
-        val reach = halfWidth + 30f
-        val dx = b.x - a.x
-        val dy = b.y - a.y
-        val lengthSquared = dx * dx + dy * dy
-        for (y in max(0, ((min(a.y, b.y) - reach) / RASTER).toInt())..min(rasterRows - 1, ((max(a.y, b.y) + reach) / RASTER).toInt()))
-            for (x in max(0, ((min(a.x, b.x) - reach) / RASTER).toInt())..min(rasterColumns - 1, ((max(a.x, b.x) + reach) / RASTER).toInt())) {
-                val px = (x + .5f) * RASTER - a.x
-                val py = (y + .5f) * RASTER - a.y
-                val t = if (lengthSquared > 0f) ((px * dx + py * dy) / lengthSquared).coerceIn(0f, 1f) else 0f
-                val ex = px - dx * t
-                val ey = py - dy * t
-                val value = halfWidth - sqrt(ex * ex + ey * ey)
+    // Lower every raster cell near the box to its distance from the box: negative inside, at most REACH.
+    private fun stamp(left: Float, top: Float, right: Float, bottom: Float) {
+        for (y in max(0, ((top - REACH) / RASTER).toInt())..min(rasterRows - 1, ((bottom + REACH) / RASTER).toInt()))
+            for (x in max(0, ((left - REACH) / RASTER).toInt())..min(rasterColumns - 1, ((right + REACH) / RASTER).toInt())) {
+                val px = (x + .5f) * RASTER
+                val py = (y + .5f) * RASTER
+                val dx = max(left - px, px - right)
+                val dy = max(top - py, py - bottom)
+                val distance = if (dx > 0f || dy > 0f) sqrt(max(dx, 0f).pow(2) + max(dy, 0f).pow(2)) else max(dx, dy)
                 val i = y * rasterColumns + x
-                if (value > raster[i]) raster[i] = value
+                if (distance < raster[i]) raster[i] = distance
             }
     }
 
@@ -167,7 +208,11 @@ class StreetNetwork(val width: Float, val height: Float, val route: MarchRoute, 
         return seen
     }
 
-    companion object { const val CELL = 35f; const val RASTER = 5f }
+    companion object {
+        const val CELL = 20f
+        const val RASTER = 5f
+        private const val REACH = 30f
+    }
 }
 
 /** Binary min-heap of grid cells keyed by f. A cell may be queued more than once; A* skips the closed copies. */

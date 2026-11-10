@@ -31,15 +31,11 @@ private fun MarchRoute.path() = Path().apply {
 }
 internal class MapPaint(val map: CityMap) {
     val route = map.route.path()
-    val streets = map.network.streets.map { it.line.path() }
     // Every width is fixed, so the strokes are built once, not every frame.
-    val curbs = map.network.streets.map { road(it.width + 12f) }
-    val lanes = map.network.streets.map { road(it.width - 4f) }
     val routeRoad = listOf(Color(0xFF172F39) to 143f, Color(0xFF869893) to 132f, Color(0xFF526E73) to 118f, Color(0xFF304E5B) to 103f)
         .map { (color, width) -> color to road(width) }
     val centerLine = Stroke(2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 16f)))
     // The minimap's route keeps its size on a larger map.
-    val miniStreets = map.network.streets.map { road(it.width / 2) }
     val miniRoute = Stroke(16f * map.scale, cap = StrokeCap.Round)
     /** Each crosswalk's center and its angle in degrees. The first and the last stay outside the end squares. */
     val crosswalks = listOf(.04f, .36f, .66f, .92f).map { f ->
@@ -50,10 +46,8 @@ internal class MapPaint(val map: CityMap) {
     }
     val names = map.labels.map { it.text.uppercase() }
 }
-private val blocks = Color(0xFF1A2F37)
-private val lowRoof = Color(0xFF223C46)
+private val pavement = Color(0xFF1A2F37)
 private val curb = Color(0xFF5B7376)
-private val asphalt = Color(0xFF2B4753)
 private val plaza = Color(0xFF3A5761)
 private val roofs = listOf(Color(0xFF597078), Color(0xFF6A7F7C), Color(0xFF466573), Color(0xFF7B8071), Color(0xFF3E6271))
 // City colours are dimmed for the night, so the march, the threats, and the names stay brighter than any roof.
@@ -1406,20 +1400,11 @@ private fun DrawScope.panettoneCard() {
 
 private fun road(width: Float) = Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
-/** Blocks full of low roofs, and the faint grid. Streets and squares are drawn over them. */
+/** Open pavement with a faint grid, where everyone but the march walks. The street and the buildings go on top. */
 private fun DrawScope.ground(rect: Rect) {
-    drawRect(blocks, rect.topLeft, rect.size)
+    drawRect(pavement, rect.topLeft, rect.size)
     val columns = floor(rect.left / 70).toInt()..floor(rect.right / 70).toInt()
     val rows = floor(rect.top / 70).toInt()..floor(rect.bottom / 70).toInt()
-    for (row in rows) for (column in columns) {
-        val x = column * 70f
-        val y = row * 70f
-        when ((column * 7 + row * 11 + column * row).mod(5)) {
-            0, 1 -> round(x + 5, y + 5, 60f, 60f, lowRoof)
-            2, 3 -> { round(x + 5, y + 5, 27f, 60f, lowRoof); round(x + 38, y + 5, 27f, 60f, lowRoof) }
-            else -> { round(x + 5, y + 5, 60f, 27f, lowRoof); round(x + 5, y + 38, 60f, 27f, lowRoof) }
-        }
-    }
     for (column in columns) drawLine(Color.White.copy(alpha = .022f), Offset(column * 70f, rect.top), Offset(column * 70f, rect.bottom), 1f)
     for (row in rows) drawLine(Color.White.copy(alpha = .022f), Offset(rect.left, row * 70f), Offset(rect.right, row * 70f), 1f)
 }
@@ -1430,19 +1415,15 @@ internal fun DrawScope.city(paint: MapPaint, measurer: TextMeasurer? = null, vis
     val map = paint.map
     val area = visible?.inflate(120f)
     ground(visible ?: Rect(0f, 0f, map.width, map.height))
-    // Every edge goes down before any asphalt, so crossings and the mouths of the squares stay open.
-    paint.streets.forEachIndexed { i, street -> drawPath(street, curb, style = paint.curbs[i]) }
-    map.network.squares.forEach { drawCircle(curb, it.radius + 3f, it.center.offset(), style = Stroke(6f)) }
-    paint.streets.forEachIndexed { i, street -> drawPath(street, asphalt, style = paint.lanes[i]) }
-    // Spokes start at the square center, so the plaza goes over their asphalt.
-    map.network.squares.forEach { drawCircle(plaza, it.radius, it.center.offset()) }
+    map.stops.forEach { drawCircle(curb, it.radius + 3f, it.center.offset(), style = Stroke(6f)) }
+    map.stops.forEach { drawCircle(plaza, it.radius, it.center.offset()) }
     paint.routeRoad.forEach { (color, stroke) -> drawPath(paint.route, color, style = stroke) }
     drawPath(paint.route, Color(0xFF91A6A0).copy(alpha = .4f), style = paint.centerLine)
     paint.crosswalks.forEach { (p, angle) ->
         rotate(angle, p) { repeat(7) { j -> round(p.x - 15, p.y - 41 + j * 12, 30f, 5f, Color(0xFF90A7A3).copy(alpha = .34f), 1f) } }
     }
     // The route runs through every stop's center, so the monuments go on top of it.
-    map.network.squares.forEach { square ->
+    map.stops.forEach { square ->
         val c = square.center.offset()
         when (square.kind) {
             SquareKind.Roundabout -> {
@@ -1720,7 +1701,6 @@ fun RouteMiniature(camera: HeroCamera, engine: GameEngine, revision: Int, modifi
         val s = min(size.width / engine.map.width, size.height / engine.map.height)
         val k = engine.map.scale // the dots keep their size on a larger map
         scale(s, s, Offset.Zero) {
-            paint.streets.forEachIndexed { i, street -> drawPath(street, Palette.Muted.copy(alpha = .1f), style = paint.miniStreets[i]) }
             drawPath(paint.route, Palette.Muted.copy(alpha = .45f), style = paint.miniRoute)
             drawRect(Palette.Cream.copy(alpha = .12f), (camera.center - Vec2(camera.viewWidth / 2, camera.viewHeight / 2)).offset(), Size(camera.viewWidth, camera.viewHeight))
             drawCircle(Palette.Mint, 29f * k, engine.crowdCenter.offset())

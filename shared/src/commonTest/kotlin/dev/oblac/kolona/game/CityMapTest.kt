@@ -5,6 +5,7 @@ import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.max
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.test.*
 import kotlin.time.TimeSource
 
@@ -33,7 +34,7 @@ class CityMapTest {
             l.position.y < position.y + height && position.y < l.position.y + l.height
     private fun inside(p: Vec2, position: Vec2, width: Float, height: Float) =
         p.x > position.x && p.x < position.x + width && p.y > position.y && p.y < position.y + height
-    private fun inside(p: Vec2, b: Building) = inside(p, b.position, b.width, b.height)
+    private fun inside(p: Vec2, b: Building) = inside(p, b.position, b.width, b.height + Building.FRONT)
     // A 5 × 5 grid over the turned footprint, also raised by half and all of the prop's height (people and columns stand up from it).
     private fun footprint(prop: Prop): List<Vec2> {
         val facing = Vec2(cos(prop.angle), sin(prop.angle))
@@ -54,6 +55,40 @@ class CityMapTest {
         }
     }
 
+    private fun footprintOf(b: Building) = listOf(b.position.x, b.position.y, b.position.x + b.width, b.position.y + b.height + Building.FRONT)
+    private fun gap(a: List<Float>, b: List<Float>): Float {
+        val dx = max(0f, max(b[0] - a[2], a[0] - b[2]))
+        val dy = max(0f, max(b[1] - a[3], a[1] - b[3]))
+        return if (dx == 0f && dy == 0f) -1f else sqrt(dx * dx + dy * dy)
+    }
+    private fun clear(map: CityMap, p: Vec2, margin: Float = 20f) =
+        (map.buildings.map { footprintOf(it) } + map.landmarks.map { listOf(it.position.x, it.position.y, it.position.x + it.width, it.position.y + it.height) })
+            .none { p.x > it[0] - margin && p.x < it[2] + margin && p.y > it[1] - margin && p.y < it[3] + margin }
+
+    // People are about 25 units wide, so they fit between any two buildings, and between a building and a landmark.
+    @Test fun buildingsLeaveRoomToWalkBetween() = forEachMap { name, map ->
+        val landmarks = map.landmarks.map { listOf(it.position.x, it.position.y, it.position.x + it.width, it.position.y + it.height) }
+        map.buildings.forEachIndexed { i, a ->
+            (map.buildings.drop(i + 1).map { footprintOf(it) } + landmarks).forEach { b ->
+                assertTrue(gap(footprintOf(a), b) >= 48f, "$name: $a and $b are ${gap(footprintOf(a), b)} apart")
+            }
+        }
+    }
+
+    // Away from the street, buildings, and landmarks, the hero can walk anywhere and stop on the very spot.
+    @Test fun openGroundIsWalkable() = forEachMap { name, map ->
+        val spots = (1..19).flatMap { i -> (1..19).map { j -> Vec2(map.width * i / 20, map.height * j / 20) } }
+            .filter { p -> map.route.distanceFrom(p) > 120f && map.stops.none { it.center.distanceTo(p) < it.radius + 40f } && clear(map, p) }
+        assertTrue(spots.size >= 20, "$name: only ${spots.size} open spots")
+        spots.forEach { spot ->
+            assertFalse(map.blocked(spot), "$name: $spot is blocked")
+            val path = map.path(map.heroStart, spot)
+            assertTrue(path.isNotEmpty() && path.last().distanceTo(spot) < 1f, "$name: the way to $spot ends at ${path.lastOrNull()}")
+        }
+    }
+
+    @Test fun everyCityHasTrees() = forEachMap { name, map -> assertTrue(map.trees.size >= 10, "$name: ${map.trees.size} trees") }
+
     @Test fun cityCodesRoundTripAndUnknownCodesGiveBelgrade() {
         City.entries.forEach { assertEquals(it, City.fromCode(it.code)) }
         assertEquals(City.Belgrade, City.fromCode(null))
@@ -66,7 +101,7 @@ class CityMapTest {
         assertTrue(samples.first().position.distanceTo(map.stops.first().center) <= 1f, name)
         assertTrue(samples.last().position.distanceTo(map.stops.last().center) <= 1f, name)
         map.stops.drop(1).dropLast(1).forEach {
-            assertTrue(map.route.distanceFrom(it.center) <= map.network.routeWidth / 2, "$name: ${it.name}")
+            assertTrue(map.route.distanceFrom(it.center) <= map.street.routeWidth / 2, "$name: ${it.name}")
         }
         val distances = map.stops.map { stop -> samples.minBy { it.position.distanceTo(stop.center) }.distance }
         assertTrue(distances.zipWithNext().all { (a, b) -> b > a }, "$name: $distances")
@@ -87,22 +122,22 @@ class CityMapTest {
         }
     }
 
-    @Test fun noBuildingTouchesTheWalkableNetwork() = forEachMap { name, map ->
+    @Test fun noBuildingStandsOnTheStreet() = forEachMap { name, map ->
         assertTrue(map.buildings.size >= 5, name)
-        map.buildings.forEach { b -> probes(b).forEach { assertTrue(map.network.clearance(it) <= -6f, "$name: $b at $it") } }
+        map.buildings.forEach { b -> probes(b).forEach { assertTrue(map.street.clearance(it) <= -6f, "$name: $b at $it") } }
     }
 
     @Test fun everyTemplateNameIsLabelledOnTheMap() = forEachMap { name, map ->
         val template = map.city.template
         val texts = map.labels.map { it.text }
-        (template.stops.map { it.name } + template.legs.flatMap { it.names } + template.streets.map { it.name })
+        (template.stops.map { it.name } + template.legs.flatMap { it.names })
             .forEach { assertTrue(it in texts, "$name: $it") }
         map.labels.forEach {
             assertTrue(it.position.x in 40f..map.width - 40f && it.position.y in 40f..map.height - 40f, "$name: ${it.text} at ${it.position}")
         }
     }
 
-    @Test fun everyLandmarkIsPlacedInABlockNearItsPlace() = forEachMap { name, map ->
+    @Test fun everyLandmarkIsPlacedOffTheStreetNearItsPlace() = forEachMap { name, map ->
         val specs = map.city.template.landmarks
         assertEquals(specs.size, map.landmarks.size, name)
         val stops = map.stops.map { stop -> map.route.samples.minBy { it.position.distanceTo(stop.center) }.distance }
@@ -115,7 +150,7 @@ class CityMapTest {
             assertTrue(landmark.width in spec.width * .2f..spec.width, "$where: ${landmark.width} wide")
             assertEquals(landmark.width / spec.width, landmark.height / spec.height, .001f, where)
             probes(landmark.position, landmark.width, landmark.height).forEach {
-                assertTrue(map.network.clearance(it) <= -6f, "$where: $it is not in a block")
+                assertTrue(map.street.clearance(it) <= -6f, "$where: $it is on the street")
             }
             val center = landmark.position + Vec2(landmark.width / 2, landmark.height / 2)
             val anchor = map.route.at(stops[spec.stop] + spec.along)
@@ -130,35 +165,19 @@ class CityMapTest {
         }
     }
 
-    // A street that starts at a stop is named outside its square, not under the waiting crowd.
-    @Test fun streetNamesStayClearOfTheSquares() = forEachMap { name, map ->
-        map.city.template.streets.forEach { street ->
-            val label = map.labels.first { it.text == street.name }
-            val stop = map.stops.minBy { it.center.distanceTo(label.position) - it.radius }
-            assertTrue(label.position.distanceTo(stop.center) >= stop.radius + 40f, "$name: ${street.name} at ${label.position} is in ${stop.name}")
-        }
-    }
-
-    @Test fun everyDrawnStreetIsReachable() = forEachMap { name, map ->
-        map.network.streets.forEach { street ->
-            assertTrue(street.line.samples.any { !map.network.blocked(it.position, 17f) && map.network.connected(map.heroStart, it.position) },
-                "$name: ${street.name ?: "filler"} from ${street.line.samples.first().position}")
-        }
-    }
-
-    // Pruning hides pockets; a generator that makes many of them would leave streets nobody can reach.
+    // Pruning hides yards walled in by buildings; a generator that makes many of them would leave ground nobody can reach.
     @Test fun prunedCellsAreFew() {
         var worst = 0f
         forEachMap { name, map ->
-            val cell = StreetNetwork.CELL
+            val cell = Ground.CELL
             var open = 0
             for (row in 0 until ceil(map.height / cell).toInt()) for (col in 0 until ceil(map.width / cell).toInt()) {
                 val center = Vec2((col + .5f) * cell, (row + .5f) * cell)
-                if (center.x <= map.width && center.y <= map.height && map.network.clearance(center) >= 17f) open++
+                if (center.x <= map.width && center.y <= map.height && map.ground.clearance(center) >= 14f) open++
             }
-            val pruned = (open - map.network.walkableCells) / open.toFloat()
+            val pruned = (open - map.ground.walkableCells) / open.toFloat()
             worst = max(worst, pruned)
-            assertTrue(pruned <= .05f, "$name: $open open cells, ${map.network.walkableCells} walkable")
+            assertTrue(pruned <= .05f, "$name: $open open cells, ${map.ground.walkableCells} walkable")
         }
         println("worst pruned cells: ${worst * 100}%")
     }
@@ -187,12 +206,13 @@ class CityMapTest {
                     val p = a + (b - a) * (i.toFloat() / steps)
                     assertFalse(map.blocked(p, 10f), "$name: collision on $a -> $b")
                     assertTrue(map.buildings.none { inside(p, it) }, "$name: $p is inside a building")
+                    assertTrue(map.landmarks.none { inside(p, it.position, it.width, it.height) }, "$name: $p is inside a landmark")
                 }
             }
         }
     }
 
-    @Test fun tapsAtMapCornersResolveToStreets() = forEachMap { name, map ->
+    @Test fun tapsAtMapCornersResolveToWalkableSpots() = forEachMap { name, map ->
         corners(map).forEach { corner ->
             val path = map.path(map.heroStart, corner)
             assertTrue(path.isNotEmpty(), "$name: $corner")
@@ -200,7 +220,7 @@ class CityMapTest {
         }
     }
 
-    // Props are decoration: in blocks, clear of everything else, and placed last with their own random numbers.
+    // Props are decoration: off the street, clear of everything else, and placed last with their own random numbers.
     @Test fun propsDecorateEveryCityWithoutTouchingTheGame() = generated.forEach { g ->
         val name = g.toString()
         val map = g.map
@@ -212,7 +232,7 @@ class CityMapTest {
             val where = "$name: ${prop.kind} at ${prop.position}"
             val samples = footprint(prop)
             samples.forEach { assertTrue(it.x in 0f..map.width && it.y in 0f..map.height, "$where: $it is off the map") }
-            if (prop.kind != PropKind.Pigeons) samples.forEach { assertTrue(map.network.clearance(it) <= -2f, "$where: $it is not in a block") }
+            if (prop.kind != PropKind.Pigeons) samples.forEach { assertTrue(map.street.clearance(it) <= -2f, "$where: $it is on the street") }
             map.buildings.filter { it.position.distanceTo(prop.position) < 200f }.forEach { b ->
                 assertFalse(samples.any { inside(it, b) } || probes(b).any { covers(prop, it) }, "$where overlaps $b")
             }
@@ -228,8 +248,7 @@ class CityMapTest {
         val bare = generateMap(map.city, map.city.template.copy(props = listOf()), g.seed, map.scale)
         assertTrue(bare.props.isEmpty(), name)
         assertEquals(bare.route.samples, map.route.samples, name)
-        assertEquals(bare.network.streets.map { it.line.samples }, map.network.streets.map { it.line.samples }, name)
-        assertEquals(bare.network.walkableCells, map.network.walkableCells, name)
+        assertEquals(bare.ground.walkableCells, map.ground.walkableCells, name)
         assertEquals(bare.buildings, map.buildings, name)
         assertEquals(bare.landmarks, map.landmarks, name)
         assertEquals(bare.trees, map.trees, name)
@@ -247,28 +266,13 @@ class CityMapTest {
         assertNotEquals(a.route.samples, generateMap(City.Paris, 6, 1.5f).route.samples)
     }
 
-    // The shipped templates cannot fail like this; a bad new template must fail with a clear message.
-    @Test fun streetThatNeverEntersTheMapFailsWithItsName() {
+    // At full size, it would cover the route wherever it stood near Terazije.
+    @Test fun landmarkTooBigForItsPlaceShrinks() {
         val belgrade = City.Belgrade.template
-        val template = belgrade.copy(streets = belgrade.streets + NamedStreet("Nowhere", listOf(.2f to -.6f, .8f to -.6f), 95f))
-        val error = assertFailsWith<IllegalArgumentException> { generateMap(City.Belgrade, template, 1, 1f) }
-        assertContains(error.message.orEmpty(), "Nowhere")
-    }
-
-    // At 1x, every part of this street on the map is within 40 units of Trg Republike.
-    @Test fun streetWithNoRoomForItsLabelFailsWithItsName() {
-        val belgrade = City.Belgrade.template
-        val template = belgrade.copy(streets = belgrade.streets + NamedStreet("Stub", listOf(.96f to .08f, 1.05f to .08f), 95f))
-        val error = assertFailsWith<IllegalArgumentException> { generateMap(City.Belgrade, template, 1, 1f) }
-        assertContains(error.message.orEmpty(), "Stub")
-    }
-
-    @Test fun landmarkTooBigForItsBlocksShrinks() {
-        val belgrade = City.Belgrade.template
-        val template = belgrade.copy(landmarks = belgrade.landmarks + LandmarkSpec("Big", LandmarkKind.Museum, 1, 0f, 1, 400f, 300f))
+        val template = belgrade.copy(landmarks = belgrade.landmarks + LandmarkSpec("Big", LandmarkKind.Museum, 1, 0f, 1, 900f, 700f))
         val big = generateMap(City.Belgrade, template, 1, 1f).landmarks.last()
         assertEquals("Big", big.name)
-        assertTrue(big.width < 400f && big.height < 300f, "$big")
+        assertTrue(big.width < 900f && big.height < 700f, "$big")
     }
 
     // Even at its smallest size, this is taller than the map.
@@ -303,14 +307,6 @@ class CityMapTest {
         assertContains(error.message.orEmpty(), "Kralja Milana")
     }
 
-    // From this far off the map, the map fills less than 45°, so at least one of Nation's 8 spokes misses it.
-    @Test fun spokeThatNeverEntersTheMapFailsWithTheSquareName() {
-        val paris = City.Paris.template
-        val template = paris.copy(stops = listOf(paris.stops[0], paris.stops[1], paris.stops[2].copy(u = 3f, v = 3f)))
-        val error = assertFailsWith<IllegalArgumentException> { generateMap(City.Paris, template, 1, 1f) }
-        assertContains(error.message.orEmpty(), "Nation")
-    }
-
     @Test fun legCountThatDoesNotMatchTheStopsFailsClearly() {
         val belgrade = City.Belgrade.template
         for (legs in listOf(belgrade.legs + Leg(listOf("Extra"), listOf()), belgrade.legs.take(1))) {
@@ -328,15 +324,6 @@ class CityMapTest {
         val texts = generateMap(City.Paris, template, 1, 1f).labels.map { it.text }
         paris.legs[0].names.forEach { assertFalse(it in texts, "$it is still labelled") }
         paris.legs[1].names.forEach { assertTrue(it in texts, "$it is missing") }
-    }
-
-    @Test fun streetNeedsAtLeastTwoPoints() {
-        val belgrade = City.Belgrade.template
-        for (points in listOf(listOf(1.05f to .5f), listOf<Pair<Float, Float>>())) {
-            val template = belgrade.copy(streets = belgrade.streets + NamedStreet("Dot", points, 95f))
-            val error = assertFailsWith<IllegalArgumentException> { generateMap(City.Belgrade, template, 1, 1f) }
-            assertContains(error.message.orEmpty(), "Dot")
-        }
     }
 
     @Test fun templateNeedsAtLeastTwoStops() {

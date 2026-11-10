@@ -20,7 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Streets, squares, and blocks are drawn under the route; the march road must still show on top. */
+/** The ground and the squares are drawn under the route; the march road must still show on top. */
 class MapRenderingTest {
     private val asphalt = Color(0xFF304E5B)
     // Clear of the crosswalks (.36, .66, and next to the end squares) and of the A/B markers at the ends.
@@ -40,7 +40,7 @@ class MapRenderingTest {
         }
     }
 
-    // No street, block, or building uses a landmark's main colour: drawn, it fills at least 5% of the footprint (10% measured); not drawn, none.
+    // No ground, street, or building uses a landmark's main colour: drawn, it fills at least 5% of the footprint (10% measured); not drawn, none.
     @Test
     fun landmarksAreDrawn() {
         for (city in City.entries) {
@@ -63,7 +63,7 @@ class MapRenderingTest {
         }
     }
 
-    // No street, block, building, landmark, or tree uses a prop kind's colour: drawn, it shows at least 12 pixels in each footprint (16 measured); not drawn, none.
+    // No ground, street, building, landmark, or tree uses a prop kind's colour: drawn, it shows at least 12 pixels in each footprint (16 measured); not drawn, none.
     @Test
     fun propsAreDrawn() {
         for (city in City.entries) {

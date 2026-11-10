@@ -40,7 +40,7 @@ First beta. Play a game in Belgrade, Paris and Milan. Try the four languages wit
 
 ### Notes for Beta App Review
 
-No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE PROTEST. Tap the street to move the defender. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
+No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE PROTEST. Tap anywhere on the map to move the defender; it walks around buildings. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
 
 ## App icon
 

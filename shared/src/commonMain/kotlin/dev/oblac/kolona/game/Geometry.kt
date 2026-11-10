@@ -47,7 +47,10 @@ class HeroCamera(val worldWidth: Float = 1400f, val worldHeight: Float = 1120f) 
 }
 
 data class RoutePoint(val position: Vec2, val distance: Float)
-data class Building(val position: Vec2, val width: Float, val height: Float, val palette: Int)
+data class Building(val position: Vec2, val width: Float, val height: Float, val palette: Int) {
+    /** The front wall shows this far below the roof, so the building stands in the way down to [height] + FRONT. */
+    companion object { const val FRONT = 12f }
+}
 data class Landmark(val name: String, val kind: LandmarkKind, val position: Vec2, val width: Float, val height: Float)
 data class Tree(val position: Vec2, val radius: Float)
 /** [position] is the middle of the footprint. [angle] (radians) points to the nearest street, so the prop's front faces the sidewalk. */

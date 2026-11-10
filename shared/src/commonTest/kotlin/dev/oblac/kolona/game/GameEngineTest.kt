@@ -6,10 +6,42 @@ import kotlin.test.*
 class GameEngineTest {
     private fun game() = GameEngine(seed = 7, config = GameConfig(spawnEnemies = false))
     private fun advance(game: GameEngine, seconds: Float) { repeat((seconds * 60).toInt()) { game.advance(1f / 60) } }
-    private fun street(game: GameEngine, dx: Float, dy: Float) = game.map.nearestWalkable(game.hero.position + Vec2(dx, dy))
+    private fun spot(game: GameEngine, dx: Float, dy: Float) = game.map.nearestWalkable(game.hero.position + Vec2(dx, dy))
     // Outside the fire range, so only a bomb can stop enemies there.
-    private fun farStreet(game: GameEngine) = street(game, 430f, -190f).also {
+    private fun farSpot(game: GameEngine) = spot(game, 430f, -190f).also {
         assertTrue(it.distanceTo(game.hero.position) >= 300f, "$it is too close to the hero")
+    }
+
+    // Well off the street and its squares, and clear of every building (with its front wall) and landmark.
+    private fun openGround(map: CityMap, near: Vec2): Vec2 =
+        (-10..10).flatMap { i -> (-10..10).map { j -> near + Vec2(i * 20f, j * 20f) } }
+            .filter { p ->
+                map.route.distanceFrom(p) > 120f && map.stops.none { it.center.distanceTo(p) < it.radius + 40f } &&
+                    map.buildings.none { b -> p.x > b.position.x - 25f && p.x < b.position.x + b.width + 25f && p.y > b.position.y - 25f && p.y < b.position.y + b.height + Building.FRONT + 25f } &&
+                    map.landmarks.none { l -> p.x > l.position.x - 25f && p.x < l.position.x + l.width + 25f && p.y > l.position.y - 25f && p.y < l.position.y + l.height + 25f }
+            }
+            .minByOrNull { it.distanceTo(near) } ?: fail("No open ground within 200 units of $near")
+
+    @Test fun heroWalksAcrossOpenGroundToTheVerySpot() {
+        val game = game()
+        val spot = openGround(game.map, game.hero.position)
+        assertEquals(CommandResult.Move, game.command(spot))
+        advance(game, 4f)
+        assertTrue(game.hero.position.distanceTo(spot) < 1f, "The hero stopped at ${game.hero.position}, not at $spot")
+    }
+
+    // The hero stands 30 units below a building, and an attacker has squeezed in between.
+    @Test fun theBarricadeNeverShovesAnAttackerIntoABuilding() {
+        val building = Building(Vec2(660f, 590f), 80f, 68f, 0)
+        val route = MarchRoute(listOf(Vec2(100f, 900f), Vec2(1300f, 900f)))
+        val stops = listOf(Square("A", route.at(0f), 90f, SquareKind.Open), Square("B", route.at(route.length), 90f, SquareKind.Open))
+        val map = CityMap(City.Belgrade, 1f, Street(1400f, 1120f, route, 120f, stops), Ground(1400f, 1120f, listOf(building), listOf(), route.at(0f)),
+            stops, listOf(building), listOf(), listOf(), listOf(), Vec2(700f, 700f), listOf())
+        val game = GameEngine(7, GameConfig(spawnEnemies = false), map)
+        val enemy = Enemy(1, EnemyKind.Thug, Vec2(700f, 685f)).apply { warning = 0f }
+        game.enemies += enemy
+        advance(game, .1f)
+        assertFalse(game.map.blocked(enemy.position, 0f), "The barricade shoved the attacker into the building, to ${enemy.position}")
     }
 
     @Test fun startsWith72MarchersAndDeployedBarricade() {
@@ -21,7 +53,7 @@ class GameEngineTest {
 
     @Test fun pauseFreezesMovementCrowdAndCooldowns() {
         val game = game()
-        game.command(street(game, 230f, -90f))
+        game.command(spot(game, 230f, -90f))
         advance(game, .25f)
         game.pause()
         val hero = game.hero.position
@@ -31,7 +63,7 @@ class GameEngineTest {
         assertEquals(hero, game.hero.position)
         assertEquals(crowd, game.people.map { it.position })
         assertEquals(elapsed, game.elapsed)
-        assertEquals(CommandResult.Ignored, game.command(street(game, 280f, -140f)))
+        assertEquals(CommandResult.Ignored, game.command(spot(game, 280f, -140f)))
         game.resume()
         advance(game, .25f)
         assertTrue(game.elapsed > elapsed)
@@ -42,7 +74,7 @@ class GameEngineTest {
         val game = game()
         val target = Enemy(1, EnemyKind.Thug, game.hero.position + Vec2(40f, -80f)).apply { warning = 0f }
         game.enemies += target
-        assertEquals(CommandResult.Move, game.command(street(game, 340f, -100f)))
+        assertEquals(CommandResult.Move, game.command(spot(game, 340f, -100f)))
         advance(game, .2f)
         assertTrue(game.hero.moving)
         assertEquals(0, game.shots.size)
@@ -61,7 +93,7 @@ class GameEngineTest {
 
     @Test fun bombsRequireFourEnemiesAndEnforceCooldownWithoutMovingHero() {
         val game = game()
-        val p = farStreet(game)
+        val p = farSpot(game)
         repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
         val original = game.hero.position
         assertEquals(CommandResult.Bomb, game.command(p))
@@ -78,7 +110,7 @@ class GameEngineTest {
 
     @Test fun threeEnemiesAreAMoveCommandAndWarningEnemiesDoNotQualify() {
         val game = game()
-        val p = farStreet(game)
+        val p = farSpot(game)
         repeat(3) { game.enemies += Enemy(it, EnemyKind.Thug, p).apply { warning = 0f } }
         game.enemies += Enemy(4, EnemyKind.Thug, p)
         assertEquals(CommandResult.Move, game.command(p))
@@ -118,7 +150,7 @@ class GameEngineTest {
         }
     }
 
-    @Test fun enemyPushedIntoABlockWalksBackToTheStreet() {
+    @Test fun anEnemyInsideABuildingWalksOut() {
         val game = game()
         val start = game.map.buildings.map { it.position + Vec2(it.width / 2, it.height / 2) }
             .first { it.distanceTo(game.hero.position) > 400f }
@@ -140,13 +172,13 @@ class GameEngineTest {
         val elapsed = game.elapsed
         advance(game, 1f)
         assertEquals(elapsed, game.elapsed)
-        assertEquals(CommandResult.Ignored, game.command(street(game, 230f, -90f)))
+        assertEquals(CommandResult.Ignored, game.command(spot(game, 230f, -90f)))
     }
 
     @Test fun fixedTimestepMatchesAcrossDisplayRefreshRates() {
         val a = game()
         val b = game()
-        val target = street(a, 280f, -90f)
+        val target = spot(a, 280f, -90f)
         a.command(target)
         b.command(target)
         repeat(600) { a.advance(1f / 60) }
@@ -191,7 +223,7 @@ class GameEngineTest {
     // A beaten person falls and lies on the map for a moment; only then does the body go.
     @Test fun aBeatenEnemyFallsWhereItStoodThenLeaves() {
         val game = game()
-        val spot = street(game, 120f, 0f)
+        val spot = spot(game, 120f, 0f)
         game.enemies += Enemy(900, EnemyKind.Police, spot).apply { health = 0 }
         advance(game, 1f / 60)
         assertTrue(game.enemies.isEmpty())
@@ -216,7 +248,7 @@ class GameEngineTest {
 
     @Test fun aBeatenCarLeavesNoBody() {
         val game = game()
-        game.enemies += Enemy(901, EnemyKind.Car, street(game, 120f, 0f)).apply { health = 0 }
+        game.enemies += Enemy(901, EnemyKind.Car, spot(game, 120f, 0f)).apply { health = 0 }
         advance(game, 1f / 60)
         assertTrue(game.enemies.isEmpty())
         assertTrue(game.fallen.isEmpty())

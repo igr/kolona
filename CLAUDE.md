@@ -24,11 +24,12 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
 
 - `game/` is pure Kotlin. It has no Compose, platform, or clock code. The simulation is deterministic from its seed and runs at a fixed 60 Hz (`GameEngine`).
 - Each game builds a new `CityMap` with `generateMap(city, seed, mapScale(seed, config.maxMapScale))`:
-  1. The route goes through the template's stops and legs. Streets wobble at random. Named side streets come next, then unnamed filler streets (`StreetStyle.Grid` or `Radial`).
-  2. `StreetNetwork` decides where people can walk: only street corridors and squares (a clearance raster). It also has a 35-unit A* grid, pruned to the part connected to the route. City blocks are solid.
-  3. Then come landmarks (no randomness), buildings, trees, and labels. Props come last, with their own `Random(seed * 31 + 7)`.
-- Only the route, the streets, and the squares change gameplay. Buildings, landmarks, trees, labels, and props are decoration. The difficulty benchmark (`DifficultyBenchmarkTest`) guards this: a scripted hero must save 59.6 ± 12% people on average in every city at 1× and at max scale, and the cities may differ by at most 12% of 59.6.
-- The map size is 1400 × 1120 times a random scale from 1 to `GameConfig.maxMapScale` (2). Street widths and people do not scale.
+  1. The route goes through the template's stops and legs and wobbles at random. It is the map's one `Street`, widened into a square at each stop. There are no other streets. Only the protest keeps to the street.
+  2. Then come landmarks (no randomness) and buildings: one to a lot on a loose grid, at least 48 units apart, so people fit between any two. Some lots stay empty.
+  3. `Ground` (`game/Ground.kt`) decides where the hero and the enemies walk: the whole map except buildings (with their front wall), landmarks, and the map edge (a clearance raster). A* runs on a 20-unit grid, pruned to the part the route's start reaches, and paths are straightened into clear lines.
+  4. Then come trees (on open ground in every city, plus a ring on a `Roundabout`) and labels. Props come last, with their own `Random(seed * 31 + 7)`.
+- The route, the squares, the buildings, and the landmarks change gameplay. Trees, labels, and props are decoration: nobody walks around them. The difficulty benchmark (`DifficultyBenchmarkTest`) guards balance: a scripted hero must save 59.6 ± 12% people on average in every city at 1× and at max scale, and the cities may differ by at most 12% of 59.6.
+- The map size is 1400 × 1120 times a random scale from 1 to `GameConfig.maxMapScale` (2). The route width, the buildings, and people do not scale.
 - `ui/`:
   - `KolonaApp.kt` holds the screens, `CityDialog`, `Brand`, and `flag()`.
   - `GameScreen.kt` holds the HUD and the pause and result dialogs. The win dialog shows the souvenir.
@@ -46,8 +47,7 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
 When asked for a new city, build it right away with the defaults below. Ask only about what you cannot pick yourself.
 
 **Decide first** (real places; names matter more than geometry):
-- **Route:** 3 real squares in a real march order: start (A), middle, end (B). Add 2 legs with real street names, and 4–5 named side streets.
-- **Style:** `Grid` (rectangular blocks) or `Radial` (star squares, diagonal boulevards). Add a new `StreetStyle` only if neither fits.
+- **Route:** 3 real squares in a real march order: start (A), middle, end (B). Add 2 legs with real street names. The route is the map's only street.
 - **Landmarks:** 2–4 real buildings next to the route squares.
   - Put one near the start (A): the welcome and menu art shows only about start.x − 250 to start.x + 500 at 1× (preview seed 2026).
   - Keep landmarks with long names away from the map edges. Only the label's centre is kept inside the map.
@@ -57,11 +57,8 @@ When asked for a new city, build it right away with the defaults below. Ask only
 **Code, in this order:**
 1. `game/Cities.kt`:
    - Add a `City(code)` entry. The code is lowercase and stable.
-   - Add its `CityTemplate`. Stop and street points are (u, v) fractions inside a 110-unit margin, and street ends may go past 0..1.
-   - Set `Stop.spokes` for `Star` squares, by name. Spoke counts change 1× difficulty a lot, so they are the main tuning knob for a `Radial` city.
-   - Add any wobble exception to `NamedStreet.wobble`.
-   - `SquareKind.Round` draws a monument at its centre. Use it only for the start or the middle square, because the end square's B marker would cover it.
-   - In a `Radial` city, street trees grow only along named streets that start with "Bd" (a Paris rule). A new `Radial` city gets no street trees unless you extend that rule without changing Paris.
+   - Add its `CityTemplate`. Stop and leg points are (u, v) fractions inside a 110-unit margin.
+   - `SquareKind.Round` draws a monument at its centre. Use it only for the start or the middle square, because the end square's B marker would cover it. A `Roundabout` gets a ring of trees.
    - Landmarks are `LandmarkSpec(stop, along, side, width, height)`. Props are a list of `PropKind`.
    - Add new `LandmarkKind` or `PropKind` values only for buildings or props that do not exist yet. A `PropKind` also needs its footprint sizes.
 2. `i18n/Strings.kt`:
@@ -84,9 +81,8 @@ When asked for a new city, build it right away with the defaults below. Ask only
    - `CityFlowTest`: the city dialog fits three cards at 360×700 (`cityDialogFitsASmallPhoneWithoutScrolling`). A fourth card needs more compacting or a new layout. `ImageComposeScene` swallows a crash inside a `Dialog`, so a dialog test must prove the dialog shows: tap its button and check that the game starts.
 
 **Checks, in order:**
-1. `CityMapTest`: every stop is in order; the route length divided by the scale is 1400–2000; every landmark is placed; every prop kind appears on 2× maps; every street can be reached.
-2. `DifficultyBenchmarkTest`: if the new city is off the band, tune only that city's template structure: stop positions, legs, side streets, widths, spokes. Never add per-city gameplay values to `GameConfig`.
-   - Watch for enemies that spawn past a map edge and snap to a street next to the crowd. Bastille needed spokes for this.
+1. `CityMapTest`: every stop is in order; the route length divided by the scale is 1400–2000; every landmark is placed; every prop kind appears on 2× maps; the open ground is walkable.
+2. `DifficultyBenchmarkTest`: if the new city is off the band, tune only that city's template structure: stop positions, leg points, square sizes, landmarks. Never add per-city gameplay values to `GameConfig`.
 3. The full suite and the iOS compile (commands above).
 4. Headless renders:
    - the game start;

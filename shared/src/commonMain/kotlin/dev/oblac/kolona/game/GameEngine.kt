@@ -197,7 +197,9 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             if (!hero.moving && hero.barricade >= .7f && enemy.position.distanceTo(hero.position) < 45f) {
                 var direction = (enemy.position - hero.position).normalized()
                 if (direction == Vec2.Zero) direction = Vec2(1f, 0f)
-                enemy.position = hero.position + direction * 45f
+                // The barricade holds attackers at arm's length, but never shoves one into a building.
+                val held = hero.position + direction * 45f
+                if (!map.blocked(held)) enemy.position = held
                 if (enemy.attackCooldown <= 0f) { enemy.health--; enemy.attackCooldown = .55f }
             }
             if (enemy.health > 0 && enemy.position.distanceTo(target.position) < enemy.kind.radius + 12f && enemy.attackCooldown <= 0f) {
