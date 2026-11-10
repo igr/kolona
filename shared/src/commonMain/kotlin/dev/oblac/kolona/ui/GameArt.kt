@@ -1499,8 +1499,14 @@ internal fun DrawScope.shout(measurer: TextMeasurer, text: String, head: Offset,
     }
 }
 
-/** Marchers sway and bob a little, each out of step with the others, so a stopped march still looks alive. */
-internal fun marcherWiggle(time: Float, id: Int) = Offset(sin(time * 2.4f + id * 1.3f) * 2f, -abs(sin(time * 3.6f + id * 2.7f)) * 1.5f)
+/** A protester in the game: the legs step while the protest walks. */
+internal fun DrawScope.marcher(p: Marcher, time: Float, stopped: Boolean) =
+    person(p.position, if (p.hit > 0) Palette.Cream else coats[p.id % coats.size], p.id,
+        if (stopped) 0f else time * 9 + p.id, p.holdsSign, marcherWiggle(time, p.id, stopped))
+
+/** Marchers sway and bob a little as they walk, each out of step with the others. A stopped protest stands still, so nobody walks in place. */
+internal fun marcherWiggle(time: Float, id: Int, stopped: Boolean = false) =
+    if (stopped) Offset.Zero else Offset(sin(time * 2.4f + id * 1.3f) * 2f, -abs(sin(time * 3.6f + id * 2.7f)) * 1.5f)
 
 // The feet stay on the ground; the hips, the body, and the sign take the [wiggle].
 internal fun DrawScope.person(p: Vec2, coat: Color, id: Int, step: Float, sign: Boolean = false, wiggle: Offset = Offset.Zero) {
@@ -1705,10 +1711,7 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                 }
             }
             engine.fallen.forEach { fallen(it) }
-            engine.people.filter { it.alive && !it.arrived }.sortedBy { it.position.y }.forEach { p ->
-                person(p.position, if (p.hit > 0) Palette.Cream else coats[p.id % coats.size], p.id,
-                    if (engine.speechRemaining > 0) 0f else engine.elapsed * 9 + p.id, p.holdsSign, marcherWiggle(engine.elapsed, p.id))
-            }
+            engine.people.filter { it.alive && !it.arrived }.sortedBy { it.position.y }.forEach { marcher(it, engine.elapsed, engine.speechRemaining > 0) }
             val newest = (engine.elapsed / SHOUT_EVERY).toInt()
             for (slot in max(0, newest - 1)..newest) {
                 val speaker = shoutSpeaker(engine.people, slot)
@@ -1716,7 +1719,7 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                 val p = engine.people[speaker]
                 // The tail points just above the hat.
                 shout(measurer, strings.shout(shoutSlogan(slot), shoutMarks(slot)),
-                    p.position.offset() + marcherWiggle(engine.elapsed, p.id) + Offset(0f, -19f), engine.elapsed - slot * SHOUT_EVERY, shoutTilt(slot))
+                    p.position.offset() + marcherWiggle(engine.elapsed, p.id, engine.speechRemaining > 0) + Offset(0f, -19f), engine.elapsed - slot * SHOUT_EVERY, shoutTilt(slot))
             }
             engine.enemies.forEach { enemy(it, measurer) }
             defender(engine.hero.position.offset(), if (engine.hero.moving) 0f else engine.hero.barricade,

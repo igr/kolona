@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import dev.oblac.kolona.game.Fallen
 import dev.oblac.kolona.game.GameConfig
 import dev.oblac.kolona.game.GameEngine
+import dev.oblac.kolona.game.Marcher
 import dev.oblac.kolona.game.Vec2
 import dev.oblac.kolona.i18n.slogans
 import kotlin.test.Test
@@ -20,10 +21,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/** A stopped march still looks alive: every marcher sways and bobs, out of step with the others, and protesters shout slogans. A beaten one falls down. */
+/** A walking protester steps, sways, and bobs, out of step with the others; a stopped protest stands still. Protesters shout slogans. A beaten one falls down. */
 class MarcherRenderingTest {
-    @Test fun stoppedMarchersKeepMoving() {
-        for (id in 0 until 12) assertFalse(render(id, 0f).contentEquals(render(id, .4f)), "marcher $id stands frozen while the march is stopped")
+    @Test fun aWalkingProtesterStepsAndSways() {
+        for (id in 0 until 12) assertFalse(render(id, 0f, stopped = false).contentEquals(render(id, .4f, stopped = false)), "protester $id stands frozen while the protest walks")
+    }
+
+    // While the protest stops for a speech, nobody walks in place: the legs, the body, and the sign hold still.
+    @Test fun aStoppedProtestStandsStill() {
+        for (id in 0 until 12) assertTrue(render(id, 0f, stopped = true).contentEquals(render(id, .4f, stopped = true)), "protester $id moves while the protest is stopped")
     }
 
     @Test fun marchersDoNotMoveInStep() {
@@ -94,9 +100,9 @@ class MarcherRenderingTest {
         return (drawn.maxOf { it.first } - drawn.minOf { it.first }) to (drawn.maxOf { it.second } - drawn.minOf { it.second })
     }
 
-    private fun render(id: Int, time: Float) = ImageBitmap(60, 90).also {
+    private fun render(id: Int, time: Float, stopped: Boolean) = ImageBitmap(60, 90).also {
         CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, Canvas(it), Size(60f, 90f)) {
-            person(Vec2(30f, 60f), Palette.Mint, id, step = 0f, sign = id == 0, wiggle = marcherWiggle(time, id))
+            marcher(Marcher(id, 0, 0f, Vec2(30f, 60f)), time, stopped)
         }
     }.toPixelMap().buffer
 }

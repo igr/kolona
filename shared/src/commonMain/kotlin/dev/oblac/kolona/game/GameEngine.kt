@@ -274,7 +274,9 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         if (origin.distanceTo(target) < 205f) {
             origin = map.nearestWalkable(Vec2(if (target.x < map.width / 2) map.width - 30 else 30f, target.y))
         }
-        val count = if (kind == EnemyKind.Car) random.nextInt(1, 3) else if (random.nextFloat() < .4f) 1 else random.nextInt(4, 7)
+        val group = if (kind == EnemyKind.Car) random.nextInt(1, 3) else if (random.nextFloat() < .4f) 1 else random.nextInt(4, 7)
+        // While the protest stops for a speech, thugs come in twice the number.
+        val count = if (kind == EnemyKind.Thug && speechRemaining > 0f) group * 2 else group
         // As in the original, each attacker takes a spot of its own. Two on one spot look like one, so four would pass for three.
         val taken = mutableListOf<Vec2>()
         repeat(count) {

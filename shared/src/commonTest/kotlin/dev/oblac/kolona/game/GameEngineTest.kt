@@ -143,6 +143,19 @@ class GameEngineTest {
         assertNotEquals(positions, game.people.map { it.position })
     }
 
+    // The first wave, at 3 seconds, is thugs. While the protest stops for a speech, the same wave brings twice as many.
+    @Test fun thugsComeInTwiceTheNumberWhileTheProtestStops() {
+        fun firstWave(config: GameConfig): List<Enemy> {
+            val game = GameEngine(1, config)
+            while (game.enemies.isEmpty()) advance(game, 1f / 60)
+            return game.enemies
+        }
+        val walking = firstWave(GameConfig(speechesAt = listOf()))
+        val stopped = firstWave(GameConfig(speechesAt = listOf(0f), speechSeconds = 20f))
+        assertTrue((walking + stopped).all { it.kind == EnemyKind.Thug })
+        assertEquals(2 * walking.size, stopped.size)
+    }
+
     @Test fun completesWholeRouteWithTwoSpeechesAndAllMarchers() {
         val game = game()
         advance(game, 181f)
