@@ -35,7 +35,7 @@ private fun decide(game: GameEngine) {
     val active = game.enemies.filter { it.health > 0 && it.warning <= 0f }
     val bombTarget = active.firstOrNull { enemy -> active.count { it.position.distanceTo(enemy.position) <= GameEngine.BOMB_RADIUS } >= 4 }
     if (game.bombCooldown <= 0f && bombTarget != null) {
-        game.command(bombTarget.position)
+        game.throwBomb(bombTarget.position)
         return
     }
     val crowd = game.crowdCenter

@@ -32,7 +32,7 @@ The name under the icon on the phone is also "Protest Defender"; the home screen
 
 ### Beta App Description (307/4000)
 
-Protest Defender is a portrait action game. Guard a protest of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and tap a group of attackers to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
+Protest Defender is a portrait action game. Guard a protest of 72 people through real streets of Belgrade, Paris and Milan. Tap to move, stop to raise a barricade and fire, and swipe from your defender to throw a bomb. Get at least 36 people to the final square. Play in English, Serbian, French or Italian.
 
 ### What to Test (273/4000)
 
@@ -40,7 +40,7 @@ First beta. Play a game in Belgrade, Paris and Milan. Try the four languages wit
 
 ### Notes for Beta App Review
 
-No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE PROTEST. Tap anywhere on the map to move the defender; it walks around buildings. When the defender stops, it raises a barricade and fires at nearby threats. Tap a group of four or more attackers to throw a bomb. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
+No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND THE PROTEST. Tap anywhere on the map to move the defender; it walks around buildings. When the defender stops, it raises a barricade and fires at nearby threats. Swipe from the defender to where a bomb should land to throw it. The police and thugs are generic cartoon figures: a beaten figure falls over and fades away, with no blood. The game works offline and collects no data.
 
 ## App icon
 

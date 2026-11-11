@@ -119,17 +119,18 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         }
     }
 
+    /** The hero throws a bomb at [target], with or without attackers there. The next one waits for the recharge. */
+    fun throwBomb(target: Vec2): CommandResult {
+        if (status != GameStatus.Playing || !target.x.isFinite() || !target.y.isFinite()) return CommandResult.Ignored
+        if (bombCooldown > 0) return CommandResult.CoolingDown
+        bombs += Bomb(hero.position, target)
+        bombCooldown = 5f
+        return CommandResult.Bomb
+    }
+
+    /** The hero walks to [point]. */
     fun command(point: Vec2): CommandResult {
         if (status != GameStatus.Playing || !point.x.isFinite() || !point.y.isFinite()) return CommandResult.Ignored
-        val target = enemies.filter { it.health > 0 && it.warning <= 0f && it.position.distanceTo(point) < 43f }
-            .sortedBy { it.position.distanceTo(point) }
-            .firstOrNull { enemy -> enemies.count { it.health > 0 && it.warning <= 0f && it.position.distanceTo(enemy.position) <= BOMB_RADIUS } >= 4 }
-        if (target != null) {
-            if (bombCooldown > 0) return CommandResult.CoolingDown
-            bombs += Bomb(hero.position, target.position)
-            bombCooldown = 5f
-            return CommandResult.Bomb
-        }
         hero.path = map.path(hero.position, point)
         if (hero.moving) hero.barricade = 0f
         return if (hero.moving) CommandResult.Move else CommandResult.Ignored

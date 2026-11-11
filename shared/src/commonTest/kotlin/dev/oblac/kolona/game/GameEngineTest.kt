@@ -91,14 +91,15 @@ class GameEngineTest {
         assertTrue(game.enemies.isEmpty())
     }
 
-    @Test fun bombsRequireFourEnemiesAndEnforceCooldownWithoutMovingHero() {
+    @Test fun aBombGoesWhereItIsThrownAndRechargesWithoutMovingTheHero() {
         val game = game()
         val p = farSpot(game)
         repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
         val original = game.hero.position
-        assertEquals(CommandResult.Bomb, game.command(p))
+        assertEquals(CommandResult.Bomb, game.throwBomb(p))
+        assertEquals(p, game.bombs.single().target)
         assertEquals(5f, game.bombCooldown)
-        assertEquals(CommandResult.CoolingDown, game.command(p))
+        assertEquals(CommandResult.CoolingDown, game.throwBomb(p))
         assertEquals(1, game.bombs.size)
         assertEquals(original, game.hero.position)
         advance(game, .8f)
@@ -121,14 +122,16 @@ class GameEngineTest {
         }
     }
 
-    @Test fun threeEnemiesAreAMoveCommandAndWarningEnemiesDoNotQualify() {
+    // A swipe aims the bomb, so a bomb needs no group, and a tap on a group only moves the hero.
+    @Test fun aBombNeedsNoGroupAndATapNeverThrowsOne() {
         val game = game()
         val p = farSpot(game)
-        repeat(3) { game.enemies += Enemy(it, EnemyKind.Thug, p).apply { warning = 0f } }
-        game.enemies += Enemy(4, EnemyKind.Thug, p)
+        repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
         assertEquals(CommandResult.Move, game.command(p))
         assertTrue(game.bombs.isEmpty())
         assertEquals(0f, game.bombCooldown)
+        assertEquals(CommandResult.Bomb, game.throwBomb(game.hero.position + Vec2(0f, -150f)))
+        assertEquals(CommandResult.Ignored, game.throwBomb(Vec2(Float.NaN, 0f)))
     }
 
     @Test fun speechStopsMarchThenMarchResumes() {
@@ -277,7 +280,7 @@ class GameEngineTest {
         val game = game()
         val p = farSpot(game)
         repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
-        game.command(p)
+        game.throwBomb(p)
         while (game.bombs.isNotEmpty()) game.advance(1f / 60)
         assertEquals(9f, game.shake)
         advance(game, 1f)

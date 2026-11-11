@@ -1759,7 +1759,7 @@ private fun mix(n: Int): Int {
 }
 
 @Composable
-fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revision: Int, modifier: Modifier) {
+fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revision: Int, modifier: Modifier, aim: Vec2? = null) {
     // A frame lays out the street names plus the sprite labels; the default cache of 8 would miss every time.
     val measurer = rememberTextMeasurer(cacheSize = 32)
     val paint = remember(engine.map) { MapPaint(engine.map) }
@@ -1824,6 +1824,14 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                 val t = if (effect.blast) effect.life / .6f else effect.life / .3f
                 drawCircle(Palette.Gold.copy(alpha = t * .32f), if (effect.blast) (1 - t) * 120 else (1 - t) * 15, effect.position.offset())
                 if (effect.blast) drawCircle(Palette.Gold.copy(alpha = t), (1 - t) * 110, effect.position.offset(), style = Stroke(3f))
+            }
+            // A swipe from the defender: where the bomb will land and what it will hit. Faint while the bomb recharges.
+            aim?.let { target ->
+                val color = if (engine.bombCooldown > 0f) Palette.Faint else Palette.Gold
+                drawLine(color.copy(alpha = .8f), engine.hero.position.offset(), target.offset(), 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+                drawCircle(color.copy(alpha = .12f), GameEngine.BOMB_RADIUS, target.offset())
+                drawCircle(color, GameEngine.BOMB_RADIUS, target.offset(), style = Stroke(1.5f))
+                drawCircle(color, 5f, target.offset())
             }
         }
         // Indicators are overlays, never inputs to camera tracking.

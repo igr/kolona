@@ -1,6 +1,7 @@
 package dev.oblac.kolona.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -31,6 +33,7 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
     val frame = session.revision
     val status = engine.status
     val camera = remember(engine) { HeroCamera(engine.map.width, engine.map.height).apply { follow(engine.hero.position, 0f, snap = true) } }
+    val swipe = remember(engine) { BombSwipe() }
     // The phase box and the minimap cover the top of the map, so the camera may go that far past the map's top edge.
     var mapWidth by remember { mutableIntStateOf(0) }
     var hudHeight by remember { mutableIntStateOf(0) }
@@ -78,12 +81,18 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                 Text("${(engine.progress * 100).toInt()}%", Modifier.width(34.dp), Palette.Mint, fontSize = 10.sp, textAlign = TextAlign.End)
             }
             Box(Modifier.weight(1f).fillMaxWidth().clip(RoundedCornerShape(14.dp, 14.dp, 0.dp, 0.dp))) {
+                // A tap moves the defender. A swipe that starts on the defender throws a bomb where it ends.
                 WorldCanvas(engine, camera, strings, frame, Modifier.fillMaxSize()
                     .semantics { contentDescription = strings[Copy.MoveBody] }
                     .onSizeChanged { camera.resize(it.width.toFloat(), it.height.toFloat()); mapWidth = it.width; fitCamera() }
                     .pointerInput(engine) {
                         detectTapGestures { p -> engine.command(camera.screenToWorld(Vec2(p.x, p.y), size.width.toFloat())) }
-                    })
+                    }
+                    .pointerInput(engine) {
+                        fun world(p: Offset) = camera.screenToWorld(Vec2(p.x, p.y), size.width.toFloat())
+                        detectDragGestures(onDragStart = { swipe.start(engine, world(it)) }, onDragEnd = { swipe.end(engine) },
+                            onDragCancel = { swipe.cancel() }, onDrag = { change, _ -> swipe.move(world(change.position)) })
+                    }, swipe.aim)
                 Row(Modifier.fillMaxWidth().onSizeChanged { hudHeight = it.height; fitCamera() }.padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                     Column(Modifier.clip(RoundedCornerShape(6.dp)).background(Palette.Ink.copy(alpha = .91f)).padding(10.dp, 8.dp)) {
@@ -102,7 +111,8 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                         fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     Text(strings[Copy.BombHint], color = Palette.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
                 }
-                Display(if (engine.bombCooldown > 0) "${ceil(engine.bombCooldown).toInt()}s" else "4+", 29, if (engine.bombCooldown > 0) Palette.Faint else Palette.Gold)
+                if (engine.bombCooldown > 0) Display("${ceil(engine.bombCooldown).toInt()}s", 29, Palette.Faint)
+                else SymbolIcon(Symbol.Arrow, Modifier.size(27.dp), Palette.Gold)
             }
             Row(Modifier.fillMaxWidth().padding(16.dp, 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 Legend(strings[Copy.Crowd], Palette.Mint)
@@ -187,4 +197,23 @@ private fun Legend(text: String, color: Color) {
 private fun formatTime(seconds: Float): String {
     val time = seconds.toInt()
     return "${time / 60}:${(time % 60).toString().padStart(2, '0')}"
+}
+
+/**
+ * A swipe that starts on the defender aims a bomb at the finger, and letting go throws it there.
+ * A swipe that starts elsewhere, or one shorter than SHORT, throws nothing.
+ */
+internal class BombSwipe {
+    var aim: Vec2? by mutableStateOf(null)
+        private set
+    fun start(engine: GameEngine, at: Vec2) { aim = if (at.distanceTo(engine.hero.position) < GRAB) at else null }
+    fun move(at: Vec2) { if (aim != null) aim = at }
+    fun end(engine: GameEngine): CommandResult {
+        val target = aim
+        aim = null
+        return if (target == null || target.distanceTo(engine.hero.position) < SHORT) CommandResult.Ignored else engine.throwBomb(target)
+    }
+    fun cancel() { aim = null }
+    // The defender is about 50 units tall; the drag starts a little away from the finger's first touch.
+    private companion object { const val GRAB = 60f; const val SHORT = 40f }
 }
