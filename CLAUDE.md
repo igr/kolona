@@ -27,8 +27,8 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
   1. The route goes through the template's stops and legs and wobbles at random. It is the map's one `Street`, widened into a square at each stop. There are no other streets. Only the protest keeps to the street.
   2. Then come landmarks (no randomness) and buildings: one to a lot on a loose grid, at least 48 units apart, so people fit between any two. Some lots stay empty.
   3. `Ground` (`game/Ground.kt`) decides where the hero and the enemies walk: the whole map except buildings (with their front wall), landmarks, and the map edge (a clearance raster). A* runs on a 20-unit grid, pruned to the part the route's start reaches, and paths are straightened into clear lines.
-  4. Then come trees (on open ground in every city, plus a ring on a `Roundabout`) and labels. Props come last, with their own `Random(seed * 31 + 7)`.
-- The route, the squares, the buildings, and the landmarks change gameplay. Trees, labels, and props are decoration: nobody walks around them. The difficulty benchmark (`DifficultyBenchmarkTest`) guards balance: a scripted hero must save 59.6 ± 12% people on average in every city at 1× and at max scale, and the cities may differ by at most 12% of 59.6.
+  4. Then come trees (on open ground in every city, plus a ring on a `Roundabout`) and labels. Props come next, with their own `Random(seed * 31 + 7)`, and rows of `Supporters` last, with `Random(seed * 37 + 11)`.
+- The route, the squares, the buildings, and the landmarks change gameplay. Trees, labels, props, and supporters are decoration: nobody walks around them. The difficulty benchmark (`DifficultyBenchmarkTest`) guards balance: a scripted hero must save 59.6 ± 12% people on average in every city at 1× and at max scale, and the cities may differ by at most 12% of 59.6.
 - The map size is 1400 × 1120 times a random scale from 1 to `GameConfig.maxMapScale` (2). The route width, the buildings, and people do not scale.
 - `ui/`:
   - `KolonaApp.kt` holds the screens, `CityDialog`, `Brand`, and `flag()`.

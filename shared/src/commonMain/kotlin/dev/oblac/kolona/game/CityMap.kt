@@ -5,7 +5,8 @@ import kotlin.random.Random
 
 /** One game's city: the street the march takes, the ground everyone else walks on, and everything drawn on top. */
 class CityMap(val city: City, val scale: Float, val street: Street, val ground: Ground, val stops: List<Square>, val buildings: List<Building>,
-              val landmarks: List<Landmark>, val trees: List<Tree>, val labels: List<MapLabel>, val heroStart: Vec2, val props: List<Prop>) {
+              val landmarks: List<Landmark>, val trees: List<Tree>, val labels: List<MapLabel>, val heroStart: Vec2, val props: List<Prop>,
+              val supporters: List<Supporters> = listOf()) {
     val width: Float get() = ground.width
     val height: Float get() = ground.height
     val route: MarchRoute get() = street.route
@@ -29,6 +30,8 @@ private val LANDMARK_SIZES = listOf(1f, .9f, .8f, .7f, .6f, .5f, .4f, .3f, .2f)
 private const val PROP_GAP = 11f // from the street edge to a prop's front
 private const val PROP_REACH = 220f // the farthest a prop may be from its anchor
 private const val PROP_APART = 300f // the closest two props of one kind may be
+private const val SUPPORTERS_EVERY = 70f // about one row of supporters for this much route
+private const val SUPPORTER_GAP = 5f // from the street edge to the front of a row
 // 520 covers almost all of LANDMARK_REACH from any start; a thin far arc is never tried.
 private val NEAREST_FIRST = (-52..52).flatMap { i -> (-52..52).map { j -> Vec2(i * 10f, j * 10f) } }
     .filter { it.length() <= 520f }.sortedBy { it.length() }
@@ -150,21 +153,75 @@ internal fun generateMap(city: City, template: CityTemplate, seed: Int, scale: F
     }.map { it.inside(width, height) }
 
     val heroStart = ground.nearestWalkable(route.at(heroDistance))
-    // Props come last and take their own random numbers, so everything above stays where it was.
-    val props = props(template.props, Random(seed * 31 + 7), street, width, height, lots, buildings, trees, labels)
-    return CityMap(city, scale, street, ground, stops, buildings, lots.map { it.landmark }, trees, labels, heroStart, props)
+    // Props and then supporters come last, each with their own random numbers, so everything above stays where it was.
+    val obstacles = obstacles(route, lots, buildings, trees, labels)
+    val props = props(template.props, Random(seed * 31 + 7), street, width, height, lots, obstacles)
+    val supporters = supporters(Random(seed * 37 + 11), street, width, height, obstacles, props)
+    return CityMap(city, scale, street, ground, stops, buildings, lots.map { it.landmark }, trees, labels, heroStart, props, supporters)
 }
 
-/** About one prop per 140 units of route, each kind once before any repeats, as near as it fits to a landmark, a square, or the route. */
-private fun props(kinds: List<PropKind>, random: Random, street: Street, width: Float, height: Float, lots: List<Lot>, buildings: List<Building>,
-                  trees: List<Tree>, labels: List<MapLabel>): List<Prop> {
-    val route = street.route
-    val squares = street.squares
-    val obstacles = buildings.map { Box.of(it.position.x - 2f, it.position.y - 2f, it.position.x + it.width + 2f, it.position.y + it.height + Building.FRONT + 2f) } +
+/** What props and supporters keep clear of: the buildings with their fronts, the landmarks with their names, the trees, the labels, and the A and B markers. */
+private fun obstacles(route: MarchRoute, lots: List<Lot>, buildings: List<Building>, trees: List<Tree>, labels: List<MapLabel>) =
+    buildings.map { Box.of(it.position.x - 2f, it.position.y - 2f, it.position.x + it.width + 2f, it.position.y + it.height + Building.FRONT + 2f) } +
         lots.map { Box.of(it.left, it.top, it.right, it.bottom) } +
         trees.map { Box.of(it.position.x - it.radius - 2f, it.position.y - it.radius - 2f, it.position.x + it.radius + 7f, it.position.y + it.radius + 11f) } +
         labels.map { Box(it.position, Vec2(-sin(it.angle), cos(it.angle)), nameReach(it.text) + 4f, 10f) } +
         listOf(route.samples.first(), route.samples.last()).map { Box.of(it.position.x - 34f, it.position.y - 34f, it.position.x + 34f, it.position.y + 34f) }
+
+/**
+ * A row of 2 to 5 supporters about every SUPPORTERS_EVERY units of route, at the edge of the street on one side or the other.
+ * A row that does not fit there tries the other side, then a little along the street, then with fewer people.
+ */
+private fun supporters(random: Random, street: Street, width: Float, height: Float, obstacles: List<Box>, props: List<Prop>): List<Supporters> {
+    val route = street.route
+    val taken = props.flatMap { it.kind.shape(it.position, Vec2(cos(it.angle), sin(it.angle))) }.toMutableList()
+    val rows = mutableListOf<Supporters>()
+    var around = listOf<Box>()
+    fun place(along: Float, side: Float, count: Int, banner: Boolean): Boolean {
+        val base = route.at(along)
+        val out = (route.at(along, side) - base).normalized()
+        // A row faces the street. A banner row faces the screen, so the banner reads the same whichever way the street runs.
+        val facing = if (banner) Vec2(0f, 1f) else out * -1f
+        val across = Vec2(-facing.y, facing.x)
+        val half = count * Supporters.SPACING / 2
+        // Out from the middle of the street until the whole row stands off it: in a square, that is farther.
+        for (step in 0..14) {
+            val center = base + out * (street.routeWidth / 2 + SUPPORTER_GAP + Supporters.DEPTH / 2 + step * 6f)
+            val shape = listOf(0f, Supporters.HEIGHT / 2, Supporters.HEIGHT).map { Box(center - Vec2(0f, it), facing, half, Supporters.DEPTH / 2) }
+            // Five points across the row, not three: a curving street edge can reach in between.
+            val feet = (0..4).flatMap { i -> (0..2).map { j -> center + facing * (Supporters.DEPTH * (j / 2f - .5f)) + across * (half * (i / 2f - 1f)) } }
+            if (feet.any { street.clearance(it) > -SUPPORTER_GAP }) continue
+            // Where a curve or a square's rim keeps one end of the row on the street, the first spot off it can be too far back.
+            if (feet.maxOf { street.clearance(it) } < -18f) return false
+            if (shape.flatMap { it.probes }.any { it.x !in 4f..width - 4f || it.y !in 4f..height - 4f }) return false
+            if (shape.any { box -> around.any { box.overlaps(it) } || taken.any { box.overlaps(it, 4f) } }) return false
+            rows += Supporters(center, atan2(facing.y, facing.x), count, banner)
+            taken += shape
+            return true
+        }
+        return false
+    }
+    var along = 40f + random.nextFloat() * SUPPORTERS_EVERY
+    while (along < route.length - 40f) {
+        val count = 2 + random.nextInt(4)
+        val banner = count >= 3 && random.nextFloat() < .45f
+        val side = if (random.nextBoolean()) 1f else -1f
+        val here = route.at(along)
+        around = obstacles.filter { it.center.distanceTo(here) < 200f + it.radius }
+        (count downTo 2).any { n ->
+            listOf(0f, 18f, -18f, 36f, -36f).any { shift ->
+                place(along + shift, side, n, banner && n >= 3) || place(along + shift, -side, n, banner && n >= 3)
+            }
+        }
+        along += SUPPORTERS_EVERY * (.6f + random.nextFloat() * .8f)
+    }
+    return rows
+}
+
+/** About one prop per 140 units of route, each kind once before any repeats, as near as it fits to a landmark, a square, or the route. */
+private fun props(kinds: List<PropKind>, random: Random, street: Street, width: Float, height: Float, lots: List<Lot>, obstacles: List<Box>): List<Prop> {
+    val route = street.route
+    val squares = street.squares
     val props = mutableListOf<Prop>()
     val taken = mutableListOf<Box>()
     fun place(kind: PropKind, center: Vec2, facing: Vec2, around: List<Box>): Boolean {

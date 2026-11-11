@@ -3,6 +3,7 @@ package dev.oblac.kolona.game
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
+import kotlin.math.PI
 import kotlin.math.max
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -52,6 +53,24 @@ class CityMapTest {
         return listOf(0f, prop.kind.height / 2, prop.kind.height).any { up ->
             val d = p + Vec2(0f, up) - prop.position
             abs(d.x * side.x + d.y * side.y) < prop.kind.width / 2 && abs(d.x * facing.x + d.y * facing.y) < prop.kind.depth / 2
+        }
+    }
+
+    // A 5 × 3 grid over the row, also raised by half and all of the height the people and the banner reach.
+    private fun footprint(group: Supporters, raised: Boolean = true): List<Vec2> {
+        val facing = Vec2(cos(group.angle), sin(group.angle))
+        val side = Vec2(-facing.y, facing.x)
+        val levels = if (raised) listOf(0f, Supporters.HEIGHT / 2, Supporters.HEIGHT) else listOf(0f)
+        return levels.flatMap { up ->
+            (0..4).flatMap { i -> (0..2).map { j -> group.position + side * (group.width * (i / 4f - .5f)) + facing * (Supporters.DEPTH * (j / 2f - .5f)) - Vec2(0f, up) } }
+        }
+    }
+    private fun covers(group: Supporters, p: Vec2): Boolean {
+        val facing = Vec2(cos(group.angle), sin(group.angle))
+        val side = Vec2(-facing.y, facing.x)
+        return listOf(0f, Supporters.HEIGHT / 2, Supporters.HEIGHT).any { up ->
+            val d = p + Vec2(0f, up) - group.position
+            abs(d.x * side.x + d.y * side.y) < group.width / 2 && abs(d.x * facing.x + d.y * facing.y) < Supporters.DEPTH / 2
         }
     }
 
@@ -254,6 +273,33 @@ class CityMapTest {
         assertEquals(bare.trees, map.trees, name)
         assertEquals(bare.labels, map.labels, name)
         assertEquals(bare.heroStart, map.heroStart, name)
+    }
+
+    // Rows of supporters stand at the edge of the street, off it, all along the route, and some hold a banner.
+    // A banner row faces the screen, so its banner reads the same along a street in any direction.
+    // They are drawing only, like the props, and take their own random numbers.
+    @Test fun supportersLineTheRouteOffTheStreet() = generated.forEach { g ->
+        val name = g.toString()
+        val map = g.map
+        assertTrue(map.supporters.size >= map.route.length / 120f, "$name: ${map.supporters.size} rows along ${map.route.length} units")
+        assertTrue(map.supporters.any { it.banner } && map.supporters.all { it.count in 2..5 }, name)
+        assertTrue(map.supporters.filter { it.banner }.all { abs(it.angle - PI.toFloat() / 2) < .001f }, "$name: a banner turned away from the screen")
+        map.supporters.forEach { group ->
+            val where = "$name: supporters at ${group.position}"
+            val samples = footprint(group)
+            samples.forEach { assertTrue(it.x in 0f..map.width && it.y in 0f..map.height, "$where: $it is off the map") }
+            footprint(group, raised = false).forEach { assertTrue(map.street.clearance(it) <= -2f, "$where: $it is on the street") }
+            assertTrue(footprint(group, raised = false).maxOf { map.street.clearance(it) } > -20f, "$where: too far from the street")
+            map.buildings.filter { it.position.distanceTo(group.position) < 200f }.forEach { b ->
+                assertFalse(samples.any { inside(it, b) }, "$where overlaps $b")
+            }
+            map.landmarks.forEach { l -> assertFalse(samples.any { inside(it, l.position, l.width, l.height) }, "$where overlaps ${l.name}") }
+            map.props.forEach { prop -> assertFalse(samples.any { covers(prop, it) }, "$where overlaps ${prop.kind} at ${prop.position}") }
+            map.supporters.filter { it !== group }.forEach { other ->
+                assertFalse(samples.any { covers(other, it) }, "$where overlaps supporters at ${other.position}")
+            }
+        }
+        assertEquals(map.supporters, generateMap(map.city, g.seed, map.scale).supporters, name)
     }
 
     @Test fun sameSeedSameMapDifferentSeedDifferentMap() {

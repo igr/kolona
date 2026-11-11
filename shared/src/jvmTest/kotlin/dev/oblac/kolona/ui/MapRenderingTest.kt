@@ -130,7 +130,7 @@ class MapRenderingTest {
     }
 
     @Test
-    fun cullingKeepsOnlyBuildingsLandmarksAndPropsInView() {
+    fun cullingKeepsOnlyBuildingsLandmarksPropsAndSupportersInView() {
         val map = generateMap(City.Paris, 1, 2f)
         val view = Rect(600f, 600f, 1120f, 1380f)
         val area = view.inflate(120f)
@@ -143,6 +143,9 @@ class MapRenderingTest {
         val props = map.props.filter { area.contains(Offset(it.position.x, it.position.y)) }
         assertTrue(props.isNotEmpty() && props.size < map.props.size, "${props.size} of ${map.props.size}")
         assertEquals(props, visibleProps(map, view))
+        val rows = map.supporters.filter { area.contains(Offset(it.position.x, it.position.y)) }
+        assertTrue(rows.isNotEmpty() && rows.size < map.supporters.size, "${rows.size} of ${map.supporters.size}")
+        assertEquals(rows, visibleSupporters(map, view))
         // Cirque d'Hiver is near République, far from Opéra Bastille.
         val circus = map.landmarks.first()
         assertEquals(listOf(circus), visibleLandmarks(map, Rect(circus.position.x, circus.position.y, circus.position.x + 520f, circus.position.y + 780f)))

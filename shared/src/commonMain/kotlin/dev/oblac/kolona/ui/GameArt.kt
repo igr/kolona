@@ -153,6 +153,10 @@ internal fun visibleProps(map: CityMap, visible: Rect): List<Prop> {
     val area = visible.inflate(120f)
     return map.props.filter { area.contains(it.position.offset()) }
 }
+internal fun visibleSupporters(map: CityMap, visible: Rect): List<Supporters> {
+    val area = visible.inflate(120f)
+    return map.supporters.filter { area.contains(it.position.offset()) }
+}
 internal fun visibleLandmarks(map: CityMap, visible: Rect): List<Landmark> {
     val area = visible.inflate(120f)
     return map.landmarks.filter { area.meets(it.position, it.width, it.height) }
@@ -701,11 +705,84 @@ private fun DrawScope.walls(p: Prop, x: Float, y: Float, w: Float, h: Float, tal
 private fun DrawScope.lid(p: Prop, x: Float, y: Float, w: Float, h: Float, tall: Float, color: Color) =
     drawRect(color, Offset(x, y) + p.screen(0f, -tall), Size(w, h))
 
-private fun DrawScope.sitter(at: Offset, coat: Color, skin: Color) {
+// People by the street cheer while the protest is this close.
+private const val CHEER_REACH = 130f
+private fun cheered(position: Vec2, people: List<Marcher>) = people.any { it.alive && !it.arrived && it.position.distanceTo(position) < CHEER_REACH }
+
+private val supporterCoats = folk + listOf(Color(0xFF8E4B45), Color(0xFF3F5873))
+// A banner's cloth and its lettering.
+private val banners = listOf(Palette.Cream to Palette.Ground, Color(0xFFB0473C) to Palette.Cream, Color(0xFF2F4858) to Palette.Cream)
+private enum class Arms { One, Both, Pole }
+
+/**
+ * A row of supporters by the street. They hop and wave, each in their own rhythm, and cheer harder, both arms up, while the protest passes.
+ * In a banner row, the two at the ends hold the banner up on poles.
+ */
+internal fun DrawScope.supporters(group: Supporters, time: Float, people: List<Marcher>) {
+    val facing = Offset(cos(group.angle), sin(group.angle))
+    val side = Offset(-facing.y, facing.x)
+    val excited = cheered(group.position, people)
+    val seed = (abs(group.position.x) * 7f + abs(group.position.y) * 13f).toInt()
+    fun spot(k: Int) = group.position.offset() + side * ((k - (group.count - 1) / 2f) * Supporters.SPACING) + facing * (if (k % 2 == 0) -1.5f else 1.5f)
+    // Lower on the screen is nearer, so the row is drawn from the back.
+    for (n in 0 until group.count) {
+        val k = if (side.y >= 0f) n else group.count - 1 - n
+        val holder = group.banner && (k == 0 || k == group.count - 1)
+        val phase = (seed + k * 37) % 100 * .0628f
+        val hop = max(0f, sin(time * (if (excited) 9f else 4.5f) + phase)) * (if (holder) 1f else if (excited) 3.2f else 1.4f)
+        cheerer(spot(k), hop, supporterCoats[(seed + k) % supporterCoats.size], skins[(seed + k * 3) % skins.size],
+            if ((seed + k) % 3 == 0) Color(0xFFB59A69) else Color(0xFF3C3934), time, phase, if (holder) Arms.Pole else if (excited) Arms.Both else Arms.One)
+    }
+    if (!group.banner) return
+    val (cloth, ink) = banners[seed % banners.size]
+    rotate(sin(time * 1.7f + seed) * 2f, group.position.offset()) {
+        val a = spot(0) + Offset(0f, -33f)
+        val b = spot(group.count - 1) + Offset(0f, -33f)
+        drawLine(Color(0xFFB1A17C), spot(0) + Offset(0f, -20f), a + Offset(0f, -7f), 1.4f)
+        drawLine(Color(0xFFB1A17C), spot(group.count - 1) + Offset(0f, -20f), b + Offset(0f, -7f), 1.4f)
+        drawLine(cloth, a, b, 10f)
+        // The slogan, as two rows of strokes too small to read.
+        for (i in 0 until 4) drawLine(ink, a + (b - a) * (.12f + i * .2f) + Offset(0f, -2.2f), a + (b - a) * (.25f + i * .2f) + Offset(0f, -2.2f), 1.8f)
+        for (i in 0 until 3) drawLine(ink, a + (b - a) * (.2f + i * .22f) + Offset(0f, 2.4f), a + (b - a) * (.33f + i * .22f) + Offset(0f, 2.4f), 1.4f)
+    }
+}
+
+// A standing supporter, feet at [at], up [hop] off the ground. A raised arm waves; a pole holder holds the pole with both hands.
+private fun DrawScope.cheerer(at: Offset, hop: Float, coat: Color, skin: Color, hair: Color, time: Float, phase: Float, arms: Arms) {
+    drawOval(Palette.Deep.copy(alpha = .3f), at + Offset(-6f, -2.5f), Size(12f, 5f))
+    val body = at - Offset(0f, hop)
+    drawLine(Palette.Ink, body + Offset(-2.5f, -9f), body + Offset(-2.8f, 0f), 3f, StrokeCap.Round)
+    drawLine(Palette.Ink, body + Offset(2.5f, -9f), body + Offset(2.8f, 0f), 3f, StrokeCap.Round)
+    val wave = sin(time * 7f + phase) * 2.5f
+    for (dir in -1..1 step 2) {
+        val shoulder = body + Offset(dir * 4f, -17f)
+        val hand = when {
+            arms == Arms.Pole -> body + Offset(dir * 1.5f, -25f)
+            arms == Arms.Both || (arms == Arms.One && dir == 1) -> shoulder + Offset(dir * 3f + wave, -9f)
+            else -> shoulder + Offset(dir * 2.5f, 7f)
+        }
+        drawLine(coat, shoulder, hand, 3f, StrokeCap.Round)
+        drawCircle(skin, 1.6f, hand)
+    }
+    round(body.x - 4.5f, body.y - 19f, 9f, 11f, coat, 3f)
+    drawCircle(skin, 4.3f, body + Offset(0f, -22.5f))
+    round(body.x - 4f, body.y - 27.5f, 8f, 3.6f, hair, 2f)
+}
+
+// A seated guest leans a little and nods while talking, each in their own rhythm. While the protest passes, an arm goes up.
+internal fun DrawScope.sitter(at: Offset, coat: Color, skin: Color, time: Float = 0f, phase: Float = 0f, cheering: Boolean = false) {
     drawOval(shade, at + Offset(-3.5f, -.5f), Size(8f, 3.5f))
-    round(at.x - 2.6f, at.y - 7f, 5.2f, 7f, coat, 2f)
-    drawCircle(skin, 2.3f, at + Offset(0f, -9f))
-    drawArc(Color(0xFF3C3934), 180f, 180f, true, at + Offset(-2.4f, -11.6f), Size(4.8f, 4.6f))
+    val lean = sin(time * 1.3f + phase) * .7f
+    val head = at + Offset(lean, sin(time * 2.2f + phase * 1.7f) * .5f - 9f)
+    round(at.x - 2.6f + lean * .5f, at.y - 7f, 5.2f, 7f, coat, 2f)
+    if (cheering) {
+        val shoulder = at + Offset(2f + lean * .5f, -6f)
+        val hand = shoulder + Offset(2.2f + sin(time * 8f + phase) * .8f, -6.5f)
+        drawLine(coat, shoulder, hand, 1.8f, StrokeCap.Round)
+        drawCircle(skin, 1f, hand)
+    }
+    drawCircle(skin, 2.3f, head)
+    drawArc(Color(0xFF3C3934), 180f, 180f, true, head + Offset(-2.4f, -2.6f), Size(4.8f, 4.6f))
 }
 
 private fun DrawScope.musician(at: Offset, coat: Color, skin: Color, hat: Color) {
@@ -725,10 +802,11 @@ private fun DrawScope.note(at: Offset, time: Float, phase: Float) {
 }
 
 private fun DrawScope.prop(p: Prop, time: Float, hero: Vec2?, people: List<Marcher>) = scale(PROP_SCALE, PROP_SCALE, p.position.offset()) {
+    val cheering = cheered(p.position, people)
     when (p.kind) {
         PropKind.Boulangerie -> boulangerie(p)
         PropKind.Crepes -> crepes(p)
-        PropKind.Cafe -> cafe(p)
+        PropKind.Cafe -> cafe(p, time, cheering)
         PropKind.MorrisColumn -> morrisColumn(p)
         PropKind.WallaceFountain -> wallaceFountain(p)
         PropKind.Metro -> metro(p)
@@ -737,13 +815,13 @@ private fun DrawScope.prop(p: Prop, time: Float, hero: Vec2?, people: List<March
         PropKind.Bikes -> bikes(p)
         PropKind.Grill -> grill(p, time)
         PropKind.Pekara -> pekara(p)
-        PropKind.Kafana -> kafana(p)
+        PropKind.Kafana -> kafana(p, time, cheering)
         PropKind.Trafika -> trafika(p)
-        PropKind.Chess -> chess(p)
+        PropKind.Chess -> chess(p, time, cheering)
         PropKind.BrassBand -> brassBand(p, time)
-        PropKind.Gelato -> gelato(p)
+        PropKind.Gelato -> gelato(p, time)
         PropKind.Pasticceria -> pasticceria(p)
-        PropKind.Espresso -> espresso(p)
+        PropKind.Espresso -> espresso(p, time, cheering)
         PropKind.Vedovella -> vedovella(p)
         PropKind.Scooters -> scooters(p)
         PropKind.Boutique -> boutique(p)
@@ -804,7 +882,7 @@ private fun DrawScope.crepes(p: Prop) = turned(p) {
     drawLine(Palette.Cream.copy(alpha = .5f), Offset(12.2f, 7f), Offset(14.2f, 7f), .6f)
 }
 
-private fun DrawScope.cafe(p: Prop) {
+private fun DrawScope.cafe(p: Prop, time: Float, cheering: Boolean) {
     turned(p) {
         drawRect(Palette.Gold.copy(alpha = .06f), Offset(-23f, -14f), Size(46f, 28f))
         drawOval(Palette.Gold.copy(alpha = .13f), Offset(-21f, -9f), Size(42f, 18f))
@@ -827,8 +905,8 @@ private fun DrawScope.cafe(p: Prop) {
         drawLine(Palette.Cream.copy(alpha = .5f), Offset(18.7f, 9f), Offset(21.3f, 9f), .6f)
         drawLine(Palette.Cream.copy(alpha = .5f), Offset(18.7f, 10.5f), Offset(21.3f, 10.5f), .6f)
     }
-    sitter(p.at(-18.1f, 1f), folk[0], skins[0])
-    sitter(p.at(10.9f, 1f), Color(0xFF8C6A5C), skins[2])
+    sitter(p.at(-18.1f, 1f), folk[0], skins[0], time, 0f, cheering)
+    sitter(p.at(10.9f, 1f), Color(0xFF8C6A5C), skins[2], time, 1.7f, cheering)
 }
 
 private fun DrawScope.morrisColumn(p: Prop) {
@@ -1007,7 +1085,7 @@ private fun DrawScope.pekara(p: Prop) = turned(p) {
     for (i in 0..2) drawCircle(Color(0xFFE6E2D6), 1.3f, Offset(15.5f + (i % 2) * 1.6f, 2.5f + i * 2.4f))
 }
 
-private fun DrawScope.kafana(p: Prop) {
+private fun DrawScope.kafana(p: Prop, time: Float, cheering: Boolean) {
     turned(p) {
         drawRect(Color(0xFF3A3128).copy(alpha = .6f), Offset(-23f, -14f), Size(46f, 28f))
         for (i in 1..5) drawLine(Palette.Deep.copy(alpha = .25f), Offset(-23f, -14f + i * 4.6f), Offset(23f, -14f + i * 4.6f), .6f)
@@ -1027,8 +1105,8 @@ private fun DrawScope.kafana(p: Prop) {
         drawRect(Color(0xFF4A3A2C), Offset(-22f, 10.5f), Size(44f, 3.5f))
         for (i in 0..10) drawCircle(if (i % 2 == 0) Color(0xFF4E7A55) else Color(0xFF3F6648), 2.1f, Offset(-21f + i * 4.2f, 10.6f))
     }
-    sitter(p.at(-20.9f, 1.6f), folk[1], skins[1])
-    sitter(p.at(8.1f, 1.6f), folk[2], skins[3])
+    sitter(p.at(-20.9f, 1.6f), folk[1], skins[1], time, .6f, cheering)
+    sitter(p.at(8.1f, 1.6f), folk[2], skins[3], time, 2.3f, cheering)
 }
 
 private fun DrawScope.trafika(p: Prop) = turned(p) {
@@ -1043,7 +1121,7 @@ private fun DrawScope.trafika(p: Prop) = turned(p) {
     drawRect(Color(0xFF6E94BC).copy(alpha = .6f), Offset(-9.5f, -8.5f) + roof, Size(19f, 14f), style = thin)
 }
 
-private fun DrawScope.chess(p: Prop) {
+private fun DrawScope.chess(p: Prop, time: Float, cheering: Boolean) {
     turned(p) {
         for (t in 0..1) {
             val x = t * 19f - 9.5f
@@ -1058,9 +1136,9 @@ private fun DrawScope.chess(p: Prop) {
             }
         }
     }
-    sitter(p.at(-17.5f, 0f), folk[3], skins[1])
-    sitter(p.at(17.5f, 0f), folk[0], skins[2])
-    sitter(p.at(0f, 0f), folk[1], skins[0])
+    sitter(p.at(-17.5f, 0f), folk[3], skins[1], time, 0f, cheering)
+    sitter(p.at(17.5f, 0f), folk[0], skins[2], time, 1.1f, cheering)
+    sitter(p.at(0f, 0f), folk[1], skins[0], time, 2.9f, cheering)
 }
 
 private fun DrawScope.brassBand(p: Prop, time: Float) {
@@ -1095,11 +1173,11 @@ private fun DrawScope.brassBand(p: Prop, time: Float) {
 }
 
 // The vendor stands behind the cart, so with the street up the screen he is nearer and goes down last.
-private fun DrawScope.gelato(p: Prop) {
+private fun DrawScope.gelato(p: Prop, time: Float) {
     val vendor = p.at(-3f, -6.5f)
     fun gelataio() {
         drawOval(shade, vendor + Offset(-4f, -1.2f), Size(9f, 3.6f))
-        musician(vendor, Color(0xFFE6E0D2), skins[2], Palette.Cream)
+        rotate(sin(time * 2f) * 3f, vendor) { musician(vendor, Color(0xFFE6E0D2), skins[2], Palette.Cream) }
     }
     if (sin(p.angle) >= 0f) gelataio()
     turned(p) {
@@ -1146,7 +1224,7 @@ private fun DrawScope.pasticceria(p: Prop) {
     for (k in 0..3) panettone(p.at(-11.5f + p.backToFront(k, 4) * 7.7f, 4f))
 }
 
-private fun DrawScope.espresso(p: Prop) {
+private fun DrawScope.espresso(p: Prop, time: Float, cheering: Boolean) {
     turned(p) {
         drawRect(Palette.Gold.copy(alpha = .06f), Offset(-20f, -13f), Size(40f, 26f))
         drawOval(Palette.Gold.copy(alpha = .13f), Offset(-18f, -8f), Size(36f, 16f))
@@ -1172,8 +1250,8 @@ private fun DrawScope.espresso(p: Prop) {
             drawCircle(Color(0xFF4E7A55), 2.2f, Offset((s * 2 - 1) * 17.5f, 9f))
         }
     }
-    sitter(p.at(-13.9f, 4.5f), folk[2], skins[1])
-    sitter(p.at(3.1f, 4.5f), Color(0xFF8C6A5C), skins[3])
+    sitter(p.at(-13.9f, 4.5f), folk[2], skins[1], time, .9f, cheering)
+    sitter(p.at(3.1f, 4.5f), Color(0xFF8C6A5C), skins[3], time, 2.6f, cheering)
 }
 
 private fun DrawScope.vedovella(p: Prop) {
@@ -1448,6 +1526,7 @@ internal fun DrawScope.city(paint: MapPaint, measurer: TextMeasurer? = null, vis
         drawCircle(Color(0xFF6E8D70).copy(alpha = .45f), t.radius * .35f, t.position.offset() + Offset(-5f, -7f))
     }
     (if (visible == null) map.props else visibleProps(map, visible)).forEach { prop(it, time, hero, people) }
+    (if (visible == null) map.supporters else visibleSupporters(map, visible)).forEach { supporters(it, time, people) }
     if (measurer != null) map.labels.forEachIndexed { i, place ->
         val p = place.position.offset()
         if (area == null || area.contains(p)) rotate(place.angle * 180f / PI.toFloat(), p) { label(measurer, paint.names[i], p, Palette.Cream, 10f) }

@@ -55,6 +55,15 @@ data class Landmark(val name: String, val kind: LandmarkKind, val position: Vec2
 data class Tree(val position: Vec2, val radius: Float)
 /** [position] is the middle of the footprint. [angle] (radians) points to the nearest street, so the prop's front faces the sidewalk. */
 data class Prop(val kind: PropKind, val position: Vec2, val angle: Float)
+/**
+ * People at the side of the street who cheer the protest on: [count] in a row through [position], along the street.
+ * [angle] (radians) points to the street. A [banner] group holds a banner up between the two at the ends.
+ */
+data class Supporters(val position: Vec2, val angle: Float, val count: Int, val banner: Boolean) {
+    val width get() = count * SPACING
+    // People stand SPACING apart in a row DEPTH deep; they reach HEIGHT above their feet, a banner included.
+    companion object { const val SPACING = 11f; const val DEPTH = 12f; const val HEIGHT = 38f }
+}
 
 class MarchRoute(points: List<Vec2>) {
     val samples: List<RoutePoint>

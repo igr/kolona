@@ -14,8 +14,10 @@ import dev.oblac.kolona.game.Fallen
 import dev.oblac.kolona.game.GameConfig
 import dev.oblac.kolona.game.GameEngine
 import dev.oblac.kolona.game.Marcher
+import dev.oblac.kolona.game.Supporters
 import dev.oblac.kolona.game.Vec2
 import dev.oblac.kolona.i18n.slogans
+import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -90,6 +92,42 @@ class MarcherRenderingTest {
         val fading = bubble(SHOUT_SECONDS - .1f)
         assertTrue((0 until 200).all { x -> (0 until 100).all { y -> fading[x, y].alpha < .5f } }, "the shout does not fade out")
     }
+
+    // Supporters at the side of the street hop and wave, each in their own rhythm.
+    @Test fun supportersCheer() {
+        val group = Supporters(Vec2(60f, 70f), (PI / 2).toFloat(), 4, banner = false)
+        assertFalse(cheer(group, 0f).buffer.contentEquals(cheer(group, .3f).buffer), "the supporters stand frozen")
+    }
+
+    // When the protest comes by, they cheer harder. A protest far away changes nothing.
+    @Test fun supportersCheerHarderAsTheProtestPasses() {
+        val group = Supporters(Vec2(60f, 70f), (PI / 2).toFloat(), 4, banner = false)
+        val alone = cheer(group, .3f).buffer
+        assertTrue(alone.contentEquals(cheer(group, .3f, listOf(Marcher(0, 0, 0f, Vec2(60f, 900f)))).buffer), "a protest far away changed the supporters")
+        assertFalse(alone.contentEquals(cheer(group, .3f, listOf(Marcher(0, 0, 0f, Vec2(60f, 130f)))).buffer), "the protest passed and nobody cheered harder")
+    }
+
+    // The two at the ends hold a banner over the heads, across most of the row.
+    @Test fun aBannerGroupHoldsUpABanner() {
+        val group = Supporters(Vec2(60f, 70f), (PI / 2).toFloat(), 4, banner = true)
+        val with = cheer(group, .3f)
+        val without = cheer(group.copy(banner = false), .3f)
+        val columns = (0 until 120).count { x -> (32 until 48).any { y -> with[x, y] != without[x, y] } }
+        assertTrue(columns >= group.width * .7f, "the banner spans $columns of ${group.width} columns over the heads")
+    }
+
+    // People at the tables move a little, each in their own rhythm, and raise an arm when the protest comes by.
+    @Test fun peopleAtTheTablesMove() {
+        fun sit(time: Float, cheering: Boolean = false) = ImageBitmap(40, 40).also {
+            CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, Canvas(it), Size(40f, 40f)) { sitter(Offset(20f, 30f), Palette.Mint, Palette.Cream, time, 0f, cheering) }
+        }.toPixelMap().buffer
+        assertFalse(sit(0f).contentEquals(sit(.5f)), "a seated person sits frozen")
+        assertFalse(sit(.5f).contentEquals(sit(.5f, cheering = true)), "a seated person does not cheer the protest")
+    }
+
+    private fun cheer(group: Supporters, time: Float, people: List<Marcher> = listOf()) = ImageBitmap(120, 100).also {
+        CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, Canvas(it), Size(120f, 100f)) { supporters(group, time, people) }
+    }.toPixelMap()
 
     /** The width and height of everything a fallen body draws. */
     private fun extent(body: Fallen): Pair<Int, Int> {
