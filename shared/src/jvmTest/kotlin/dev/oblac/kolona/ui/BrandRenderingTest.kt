@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -18,6 +19,13 @@ class BrandRenderingTest {
             assertTrue(render(compact, 1f).contentEquals(render(compact, 1.35f)),
                 "compact = $compact: the brand changes with the system text size")
         }
+    }
+
+    // The brand in the header draws the raised fist of the app icon, so the two never drift apart.
+    @Test fun brandDrawsTheFistOfTheAppIcon() {
+        val icon = generateSequence(File("").absoluteFile) { it.parentFile }
+            .map { File(it, "androidApp/src/main/res/drawable/ic_kolona.xml") }.first { it.exists() }.readText()
+        assertTrue("android:fillColor=\"#F4CF71\" android:pathData=\"${Fist.PATH}\"" in icon, "ic_kolona.xml has another fist")
     }
 
     private fun render(compact: Boolean, fontScale: Float): IntArray {

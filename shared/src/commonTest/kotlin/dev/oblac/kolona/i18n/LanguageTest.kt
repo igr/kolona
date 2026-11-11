@@ -46,6 +46,14 @@ class LanguageTest {
         assertEquals("LIBERTÀ!!", Strings(Language.Italian).shout(Copy.ShoutFreedom, 2))
     }
 
+    @Test fun theWelcomeTextNamesTheProtestersWithoutCountingThem() {
+        val words = mapOf(Language.Serbian to "demonstranata", Language.English to "protesters", Language.French to "manifestants", Language.Italian to "manifestanti")
+        for ((language, word) in words) {
+            val text = Strings(language)[Copy.WelcomeBody]
+            assertTrue(word in text && text.none(Char::isDigit), "$language: $text")
+        }
+    }
+
     @Test fun souvenirLineNamesTheCityOfTheGame() {
         val lines = mapOf(
             City.Belgrade to listOf("SUVENIR IZ BEOGRADA", "A SOUVENIR FROM BELGRADE", "SOUVENIR DE BELGRADE", "SOUVENIR DA BELGRADO"),

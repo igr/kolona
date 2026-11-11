@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -117,6 +118,12 @@ internal fun DrawScope.flag(city: City, area: Size = size) {
     }
 }
 
+// The raised fist of the app icon (androidApp's ic_kolona.xml), in its 108-unit square.
+internal object Fist {
+    const val PATH = "M41.23,19.48A4.48,4.48 0 0,1 47.07,17L50.3,18.31A4.48,4.48 0 0,1 52.78,24.14L47.07,38.28A1.2,1.2 0 0,1 45.51,38.94L36.18,35.17A1.2,1.2 0 0,1 35.52,33.61ZM55.56,22.58A4.48,4.48 0 0,1 61.4,20.1L65.09,21.6A4.48,4.48 0 0,1 67.57,27.43L60.92,43.88A1.2,1.2 0 0,1 59.37,44.54L49.57,40.58A1.2,1.2 0 0,1 48.91,39.03ZM68.86,29.57A4.48,4.48 0 0,1 74.69,27.09L77.47,28.21A4.48,4.48 0 0,1 79.94,34.05L72.11,53.45A3.49,3.49 0 0,1 67.56,55.37L62.95,53.51A3.49,3.49 0 0,1 61.02,48.97ZM80.3,38.49A4.48,4.48 0 0,1 86.14,36.01L87.52,36.57A4.48,4.48 0 0,1 90,42.41L83.65,58.11A3.49,3.49 0 0,1 79.11,60.04L75.88,58.73A3.49,3.49 0 0,1 73.95,54.19ZM30.15,33.6L54.65,44.78A5.48,5.48 0 0,1 57.68,51.92L56.56,54.69A5.48,5.48 0 0,1 49.42,57.72L42.03,54.73C48.13,58.27 51.8,65.13 51.41,71.42C53.65,66.95 56.35,60.52 58.41,55.44A1.49,1.49 0 0,1 60.35,54.61L78.83,62.08A2.99,2.99 0 0,1 80.48,65.97L64.53,89.21C63.29,91.02 62.27,94.29 62.27,96.48L62.27,110L32.38,110L32.38,78.05C32.38,75.86 31.51,72.5 30.45,70.58L20.11,51.79C18,47.71 18.38,45.18 19.5,42.4L22.48,36.09C23.97,32.93 26.46,32.1 30.15,33.6ZM44.83,83.19C47.32,85.68 49.02,90.17 49.61,94.65C50.21,90.17 51.91,86.18 54.3,83.99C51.31,82.19 47.82,82.19 44.83,83.19Z"
+}
+private val fistPath by lazy { PathParser().parsePathString(Fist.PATH).toPath() }
+
 @Composable
 internal fun Brand(compact: Boolean = false) {
     val icon = if (compact) 28.dp else 40.dp
@@ -124,15 +131,11 @@ internal fun Brand(compact: Boolean = false) {
     // The wordmark is a logo pinned to the icon's height, so the system text size does not scale it.
     CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 12.dp)) {
+            // The app icon's fist in ink on gold, a bit larger than in the icon so it reads at this size. The arm runs off the bottom edge.
             Canvas(Modifier.size(icon).clip(RoundedCornerShape(10.dp)).background(Palette.Gold)) {
-                val s = size.width / 44f
-                withTransform({ scale(s, s, Offset.Zero) }) {
-                    round(9f, 13f, 26f, 7f, Palette.Ink, 1f)
-                    round(9f, 23f, 26f, 7f, Palette.Ink, 1f)
-                    round(12f, 30f, 4f, 5f, Palette.Ink, 1f)
-                    round(28f, 30f, 4f, 5f, Palette.Ink, 1f)
-                    drawLine(Palette.Gold, Offset(20f, 13f), Offset(15f, 20f), 3f)
-                    drawLine(Palette.Gold, Offset(28f, 23f), Offset(23f, 30f), 3f)
+                val s = size.width / 96f
+                withTransform({ translate(size.width / 2 - 54f * s, size.height / 2 - 58f * s); scale(s, s, Offset.Zero) }) {
+                    drawPath(fistPath, Palette.Ink)
                 }
             }
             // The subtitle's capitals start at the icon's top edge and the wordmark stands on its bottom edge.
@@ -173,23 +176,17 @@ private fun WelcomeScreen(session: GameSession, strings: Strings) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val artHeight = (maxHeight * .36f).coerceIn(200.dp, 300.dp)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Row(Modifier.fillMaxWidth().padding(28.dp, 28.dp, 28.dp, 0.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                Brand()
-                Text("01 / 72", color = Palette.Faint, fontSize = 10.sp, letterSpacing = 1.5.sp)
-            }
+            Box(Modifier.padding(28.dp, 28.dp, 28.dp, 0.dp)) { Brand() }
             CityArtwork(session.city, Modifier.padding(top = 12.dp).fillMaxWidth().height(artHeight))
             Column(Modifier.padding(horizontal = 28.dp)) {
                 Eyebrow(strings[Copy.CityAwake])
                 Spacer(Modifier.height(14.dp))
                 Display(strings[Copy.WelcomeTitle], 58)
                 Spacer(Modifier.height(16.dp))
-                Text(strings[Copy.WelcomeBody], color = Palette.Muted, fontSize = 14.sp, lineHeight = 22.sp)
+                Text(strings[Copy.WelcomeBody] + "\n" + strings[Copy.WelcomeHint], color = Palette.Muted, fontSize = 14.sp, lineHeight = 22.sp)
                 Spacer(Modifier.height(28.dp))
                 ActionButton(strings[Copy.Enter], { choosing = true })
-                Spacer(Modifier.height(16.dp))
-                Text(strings[Copy.WelcomeHint], Modifier.fillMaxWidth(), Palette.Faint, fontSize = 11.sp, textAlign = TextAlign.Center)
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(40.dp))
                 Footer(strings)
                 Spacer(Modifier.height(20.dp))
             }

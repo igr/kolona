@@ -23,7 +23,7 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     Tagline("OD A DO SLOBODE", "FROM A TO FREEDOM", "DE A À LA LIBERTÉ", "DA A ALLA LIBERTÀ"),
     CityAwake("GRAD JE NA NOGAMA", "THE CITY IS AWAKE", "LA VILLE EST DEBOUT", "LA CITTÀ È SVEGLIA"),
     WelcomeTitle("Protest ne\nsme da stane.", "The protest\nmust go on.", "La manif\ndoit avancer.", "La protesta\nnon si ferma."),
-    WelcomeBody("72 ljudi. Jedan put do slobode.\nTi između njih i haosa.", "72 people. One road to freedom.\nYou stand between them and chaos.", "72 personnes. Une route vers la liberté.\nTu es leur rempart contre le chaos.", "72 persone. Una strada verso la libertà.\nTra loro e il caos ci sei tu."),
+    WelcomeBody("Mnogo demonstranata. Jedan put do slobode.\nTi između njih i haosa.", "Many protesters. One road to freedom.\nYou stand between them and chaos.", "Tant de manifestants. Une route vers la liberté.\nTu es leur rempart contre le chaos.", "Tanti manifestanti. Una strada verso la libertà.\nTra loro e il caos ci sei tu."),
     Enter("UĐI U GRAD", "ENTER THE CITY", "ENTRER DANS LA VILLE", "ENTRA IN CITTÀ"),
     WelcomeHint("Tvoja pozicija menja sve.", "Your position makes the difference.", "Ta position fait la différence.", "La tua posizione fa la differenza."),
     Menu("GLAVNI MENI", "MAIN MENU", "MENU PRINCIPAL", "MENU PRINCIPALE"),

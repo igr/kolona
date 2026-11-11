@@ -22,9 +22,9 @@ The name under the icon on the phone is also "Protest Defender"; the home screen
 
 Guard a protest on its way through Belgrade, Paris and Milan to the square.
 
-## Full description (1282/4000)
+## Full description (1288/4000)
 
-72 people. One road to freedom. You stand between them and chaos.
+Many protesters. One road to freedom. You stand between them and chaos.
 
 Protest Defender is a portrait action game. A protest moves through a real city, from one square to the next, and you are its guardian.
 
