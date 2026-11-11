@@ -122,16 +122,32 @@ class GameEngineTest {
         }
     }
 
-    // A swipe aims the bomb, so a bomb needs no group, and a tap on a group only moves the hero.
-    @Test fun aBombNeedsNoGroupAndATapNeverThrowsOne() {
+    // A bomb needs a group: four attackers on the map within its blast. The fourth one here is still on his way. A tap on a group only moves the hero.
+    @Test fun aBombNeedsFourAttackersWhereItLandsAndATapNeverThrowsOne() {
+        val game = game()
+        val p = farSpot(game)
+        repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = if (it == 3) 1f else 0f } }
+        assertEquals(CommandResult.Ignored, game.throwBomb(p))
+        assertEquals(CommandResult.Ignored, game.throwBomb(game.hero.position + Vec2(0f, -150f)))
+        assertTrue(game.bombs.isEmpty())
+        assertEquals(0f, game.bombCooldown)
+        game.enemies.last().warning = 0f
+        assertEquals(CommandResult.Move, game.command(p))
+        assertTrue(game.bombs.isEmpty())
+        assertEquals(CommandResult.Bomb, game.throwBomb(p))
+        assertEquals(CommandResult.Ignored, game.throwBomb(Vec2(Float.NaN, 0f)))
+    }
+
+    // A beaten thug lies on the ground for a moment, but he is no longer part of the group.
+    @Test fun deadThugsDoNotCountForABomb() {
         val game = game()
         val p = farSpot(game)
         repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, p + Vec2(it * 12f, 0f)).apply { warning = 0f } }
-        assertEquals(CommandResult.Move, game.command(p))
+        game.enemies.first().health = 0
+        game.advance(1f / 60)
+        assertEquals(1, game.fallen.size)
+        assertEquals(CommandResult.Ignored, game.throwBomb(p))
         assertTrue(game.bombs.isEmpty())
-        assertEquals(0f, game.bombCooldown)
-        assertEquals(CommandResult.Bomb, game.throwBomb(game.hero.position + Vec2(0f, -150f)))
-        assertEquals(CommandResult.Ignored, game.throwBomb(Vec2(Float.NaN, 0f)))
     }
 
     @Test fun speechStopsMarchThenMarchResumes() {

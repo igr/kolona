@@ -119,10 +119,14 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         }
     }
 
-    /** The hero throws a bomb at [target], with or without attackers there. The next one waits for the recharge. */
+    /** Attackers on the map within a bomb's blast of [target]. Beaten ones are off the list, so their bodies never count. */
+    fun attackersNear(target: Vec2) = enemies.count { it.health > 0 && it.warning <= 0f && it.position.distanceTo(target) <= BOMB_RADIUS }
+
+    /** The hero throws a bomb at [target], but only at a group of at least [BOMB_GROUP] attackers. The next one waits for the recharge. */
     fun throwBomb(target: Vec2): CommandResult {
         if (status != GameStatus.Playing || !target.x.isFinite() || !target.y.isFinite()) return CommandResult.Ignored
         if (bombCooldown > 0) return CommandResult.CoolingDown
+        if (attackersNear(target) < BOMB_GROUP) return CommandResult.Ignored
         bombs += Bomb(hero.position, target)
         bombCooldown = 5f
         return CommandResult.Bomb
@@ -291,6 +295,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         const val MIN_SURVIVORS = 36
         const val FIRE_RANGE = 285f
         const val BOMB_RADIUS = 110f
+        const val BOMB_GROUP = 4
         const val FALL_SECONDS = 1.2f
         // Spots around a wanted one, nearest first: 6 units apart, up to 60 away.
         private val AROUND = (-10..10).flatMap { i -> (-10..10).map { j -> Vec2(i * 6f, j * 6f) } }.filter { it.length() <= 60f }.sortedBy { it.length() }

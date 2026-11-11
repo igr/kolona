@@ -1825,9 +1825,9 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                 drawCircle(Palette.Gold.copy(alpha = t * .32f), if (effect.blast) (1 - t) * 120 else (1 - t) * 15, effect.position.offset())
                 if (effect.blast) drawCircle(Palette.Gold.copy(alpha = t), (1 - t) * 110, effect.position.offset(), style = Stroke(3f))
             }
-            // A swipe from the defender: where the bomb will land and what it will hit. Faint while the bomb recharges.
+            // A swipe from the defender: where the bomb will land and what it will hit. Faint while the bomb recharges or the group there is too small.
             aim?.let { target ->
-                val color = if (engine.bombCooldown > 0f) Palette.Faint else Palette.Gold
+                val color = if (engine.bombCooldown > 0f || engine.attackersNear(target) < GameEngine.BOMB_GROUP) Palette.Faint else Palette.Gold
                 drawLine(color.copy(alpha = .8f), engine.hero.position.offset(), target.offset(), 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
                 drawCircle(color.copy(alpha = .12f), GameEngine.BOMB_RADIUS, target.offset())
                 drawCircle(color, GameEngine.BOMB_RADIUS, target.offset(), style = Stroke(1.5f))

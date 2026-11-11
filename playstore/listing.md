@@ -22,7 +22,7 @@ The name under the icon on the phone is also "Protest Defender"; the home screen
 
 Guard a protest on its way through Belgrade, Paris and Milan to the square.
 
-## Full description (1288/4000)
+## Full description (1304/4000)
 
 Many protesters. One road to freedom. You stand between them and chaos.
 
@@ -30,7 +30,7 @@ Protest Defender is a portrait action game. A protest moves through a real city,
 
 - Tap anywhere to move. Your defender walks around the buildings. Markers at the edge of the screen show where the protest and the threats are.
 - Stop to raise a barricade and fire automatically at threats in range. You cannot fire while running.
-- Swipe from your defender to throw a bomb where you want it. Bombs never hurt the protesters.
+- Swipe from your defender to a group of 4 or more attackers to throw a bomb. Bombs never hurt the protesters.
 - Thugs, police and cars come in waves. The protest stops for two speeches; hold the line until it moves on.
 - Get at least 36 of the 72 people to the final square.
 
