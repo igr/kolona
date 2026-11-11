@@ -93,13 +93,6 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                     }
                     RouteMiniature(camera, engine, frame, Modifier.size(82.dp, 66.dp).clip(RoundedCornerShape(6.dp)).background(Palette.Ink.copy(alpha = .85f)).padding(5.dp))
                 }
-                Row(Modifier.align(Alignment.BottomCenter).padding(10.dp).clip(RoundedCornerShape(20.dp)).background(Palette.Ink.copy(alpha = .92f))
-                    .border(1.dp, Palette.Line, RoundedCornerShape(20.dp)).padding(12.dp, 8.dp), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Box(Modifier.size(5.dp).clip(RoundedCornerShape(3.dp)).background(if (engine.hero.moving) Palette.Mint else Palette.Gold))
-                    Text(strings[when { engine.hero.moving && engine.hero.slowedByCrowd -> Copy.Slowed; engine.hero.moving -> Copy.Moving; engine.hero.barricade < .7f -> Copy.Deploying; else -> Copy.Barricade }],
-                        color = Palette.Cream, fontSize = 8.sp, letterSpacing = .5.sp)
-                }
             }
             Row(Modifier.fillMaxWidth().background(Palette.Panel).padding(18.dp, 14.dp), verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)) {

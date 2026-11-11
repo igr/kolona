@@ -14,7 +14,6 @@ class Hero(var position: Vec2) {
     var barricade = 1f
     var fireCooldown = 0f
     var angle = 0f
-    var slowedByCrowd = false
     val moving get() = path.isNotEmpty()
 }
 class Marcher(val id: Int, val row: Int, val offset: Float, var position: Vec2) {
@@ -161,10 +160,8 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         val active = people.filter { it.alive && !it.arrived }
         if (active.isEmpty()) { status = GameStatus.Won; return }
 
-        hero.slowedByCrowd = false
         repeat(4) {
             val crowded = active.any { it.position.distanceTo(hero.position) < 20f }
-            hero.slowedByCrowd = hero.slowedByCrowd || crowded
             hero.position = move(hero.position, hero.path, (if (crowded) 105f else 280f) * dt / 4)
         }
         if (!hero.moving) hero.barricade = min(1f, hero.barricade + dt * 5)
