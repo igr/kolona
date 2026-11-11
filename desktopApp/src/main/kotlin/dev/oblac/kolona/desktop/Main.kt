@@ -7,13 +7,13 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import dev.oblac.kolona.data.DesktopPreferenceStore
+import dev.oblac.gamekit.DesktopStore
 import dev.oblac.kolona.i18n.GameIdentity
 import dev.oblac.kolona.ui.GameSession
 import dev.oblac.kolona.ui.KolonaApp
 
 fun main() = application {
-    val session = remember { GameSession(DesktopPreferenceStore()) }
+    val session = remember { GameSession(DesktopStore("dev/oblac/kolona")) }
     Window(
         onCloseRequest = ::exitApplication,
         title = GameIdentity.NAME,

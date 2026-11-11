@@ -12,6 +12,8 @@ The base Kotlin package and the Android, iOS, and desktop app ID are `dev.oblac.
 
 Use JDK 17 or 21. The Gradle wrapper is included and verifies the distribution checksum. The first build downloads dependencies.
 
+The game uses gamekit, the library of the games in `~/prj/igr/gamekit`. Gradle takes it from the local Maven repository, `~/.m2`. Before the first build, publish the version that `gradle/libs.versions.toml` pins: see the README of gamekit.
+
 ### Desktop
 
 ```sh
@@ -42,6 +44,7 @@ Install Android SDK Platform 37 and its build tools through Android Studio, then
 For Google Play, `./gradlew :androidApp:bundleRelease` writes `androidApp/build/outputs/bundle/release/androidApp-release.aab`, shrunk with R8. It is signed with the upload key named in an untracked `keystore.properties`; without that file the bundle is unsigned. `playstore/listing.md` shows how to make the key.
 
 The APK is written to `androidApp/build/outputs/apk/debug/androidApp-debug.apk`. Minimum API is 24. The activity requests portrait orientation; the shared UI also constrains the playfield to portrait when an OS or tablet window overrides orientation requests.
+The activity follows a change of the font size, the display size, the language or the keyboard itself (`configChanges`), so Android does not make it again, and a game in play goes on.
 
 ### iOS
 
@@ -59,6 +62,7 @@ Minimum iOS is 16; device and Apple Silicon simulator targets are included. Both
 ### Store uploads
 
 `just beta` uploads the current commit to Google Play internal testing and to TestFlight (`just beta-android` or `just beta-ios` for one of them). `just release` uploads it as a production draft on Google Play (roll it out in Play Console) and as a build in App Store Connect (submit it for review there).
+These recipes come from `release.just` of gamekit, which the `justfile` imports.
 
 - Commit first: the build number is the commit count, so every upload needs its own commit.
 - Android needs the upload key from `keystore.properties` and the Play service account key in `~/.android/sisyphus-play.json`, with access to this app in Play Console. Google Play takes the first bundle of an app only by hand in Play Console; the recipes work after that.
@@ -148,18 +152,18 @@ shared/src/commonMain/kotlin/dev/oblac/kolona/
   game/       Pure Kotlin simulation, city templates, map generation, walkable ground with A*, geometry, camera
   ui/         Compose screens, vector art, frame loop, app session
   i18n/       Brand, typed translations, languages
-  data/       Preferences interface and in-memory store
 shared/src/commonTest/   Simulation, map, ground, camera, language, and city session tests
-shared/src/iosMain/      iOS entry point and UserDefaults persistence
-shared/src/jvmMain/      Desktop preferences
+shared/src/iosMain/      iOS entry point
 shared/src/jvmTest/      Sprite and map rendering tests, difficulty benchmark
-androidApp/             Android activity, manifest, icon, preferences
+androidApp/             Android activity, manifest, icon
 iosApp/                 SwiftUI host, orientation/lifecycle, Xcode project
 desktopApp/             Portrait desktop launcher and macOS packaging
 playstore/              Google Play listing for the beta, and the 512 px store icon
 appstore/               App Store and TestFlight listing for the beta
 docs/                   Support and privacy pages for GitHub Pages
 ```
+
+The preferences stay in the `Store` of gamekit, in the same places as before gamekit: the user defaults with the prefix `kolona.` on iOS, the shared preferences `kolona` on Android, and the Java preferences node `dev/oblac/kolona` on the desktop.
 
 Simulation runs at a fixed 60 Hz, independently of display refresh rate. Long frame stalls are capped instead of fast-forwarding. Geometry and navigation edges are cached; randomness can be seeded for repeatable tests. No network connection is required for gameplay.
 

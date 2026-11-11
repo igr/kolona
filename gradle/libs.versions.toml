@@ -4,10 +4,12 @@ compose = "1.12.1"
 agp = "9.3.1"
 activity = "1.13.0"
 coroutines = "1.11.0"
+gamekit = "0.1.1"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
+gamekit = { module = "dev.oblac.gamekit:gamekit", version.ref = "gamekit" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

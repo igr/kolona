@@ -1,33 +1,33 @@
 package dev.oblac.kolona.i18n
 
-import dev.oblac.kolona.data.MemoryPreferenceStore
+import dev.oblac.gamekit.MemoryStore
 import dev.oblac.kolona.game.City
 import dev.oblac.kolona.ui.GameSession
 import kotlin.test.*
 
 class LanguageTest {
     @Test fun englishIsTheDefaultWhenNothingIsSaved() {
-        assertEquals(Language.English, GameSession(MemoryPreferenceStore()).language)
+        assertEquals(Language.English, GameSession(MemoryStore()).language)
     }
 
     @Test fun everyLanguageCanBeSelectedAndIsLoadedAgain() {
         Language.entries.forEach { language ->
-            val store = MemoryPreferenceStore()
+            val store = MemoryStore()
             val session = GameSession(store)
             session.select(language)
             assertEquals(language, session.language)
-            assertEquals(language.code, store.get("language"))
+            assertEquals(language.code, store.string("language"))
             assertEquals(language, GameSession(store).language)
         }
     }
 
     @Test fun savedSerbianStillLoads() {
-        val store = MemoryPreferenceStore().apply { put("language", "sr") }
+        val store = MemoryStore().apply { put("language", "sr") }
         assertEquals(Language.Serbian, GameSession(store).language)
     }
 
     @Test fun unknownSavedCodeFallsBackToEnglish() {
-        val store = MemoryPreferenceStore().apply { put("language", "de") }
+        val store = MemoryStore().apply { put("language", "de") }
         assertEquals(Language.English, GameSession(store).language)
     }
 

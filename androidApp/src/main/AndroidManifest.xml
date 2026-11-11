@@ -6,11 +6,12 @@
         android:label="Protest Defender"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <!-- The game follows these changes itself, so Android keeps the activity: a change of the font size, the display size, the language or the keyboard keeps the game in play. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="portrait"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|fontScale|fontWeightAdjustment|density|locale|layoutDirection|keyboard|navigation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

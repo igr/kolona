@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.unit.Density
-import dev.oblac.kolona.data.MemoryPreferenceStore
+import dev.oblac.gamekit.MemoryStore
 import dev.oblac.kolona.game.City
 import dev.oblac.kolona.game.GameConfig
 import dev.oblac.kolona.game.GameStatus
@@ -51,7 +51,7 @@ class CityFlowTest {
 
     @Test fun enterTheCityAsksForTheCityThenStartsTheGame() {
         for (width in listOf(430, 360)) {
-            val session = GameSession(MemoryPreferenceStore())
+            val session = GameSession(MemoryStore())
             val scene = ImageComposeScene(width * 2, 870 * 2, Density(2f)) { KolonaApp(session) }
             scene.tap(width.toFloat(), primaryButtonY(scene.frame()))
             val dialog = scene.frame()
@@ -67,7 +67,7 @@ class CityFlowTest {
     // The button is 55 dp tall; a dialog that has to scroll cuts it at its lower edge. Only the dialog's button starts the game.
     @Test fun cityDialogFitsASmallPhoneWithoutScrolling() {
         for (language in Language.entries) {
-            val store = MemoryPreferenceStore().apply { City.entries.forEach { put("best.${it.code}", "72") } }
+            val store = MemoryStore().apply { City.entries.forEach { put("best.${it.code}", "72") } }
             val session = GameSession(store).apply { select(language) }
             val scene = ImageComposeScene(360 * 2, 700 * 2, Density(2f)) { KolonaApp(session) }
             scene.tap(360f, primaryButtonY(scene.frame()))
@@ -84,7 +84,7 @@ class CityFlowTest {
     // which still fits a 360 × 700 dp phone with both buttons whole.
     @Test fun onlyAWinShowsTheCitySouvenir() {
         for (city in City.entries) for ((won, width, height) in listOf(Triple(true, 430, 870), Triple(true, 360, 870), Triple(true, 360, 700), Triple(false, 430, 870))) {
-            val session = GameSession(MemoryPreferenceStore(), GameConfig(spawnEnemies = false))
+            val session = GameSession(MemoryStore(), GameConfig(spawnEnemies = false))
             session.selectCity(city)
             session.start()
             if (!won) session.engine.people.take(37).forEach { it.health = 0 }
@@ -119,7 +119,7 @@ class CityFlowTest {
     }
 
     @Test fun defendTheProtestOnTheMenuAsksForTheCityFirst() {
-        val session = GameSession(MemoryPreferenceStore()).apply { screen = Screen.Menu }
+        val session = GameSession(MemoryStore()).apply { screen = Screen.Menu }
         val scene = ImageComposeScene(720, 1740, Density(2f)) { KolonaApp(session) }
         scene.tap(360f, primaryButtonY(scene.frame()))
         scene.frame()

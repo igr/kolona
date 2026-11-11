@@ -1,7 +1,7 @@
 package dev.oblac.kolona.ui
 
 import androidx.compose.runtime.*
-import dev.oblac.kolona.data.*
+import dev.oblac.gamekit.Store
 import dev.oblac.kolona.game.*
 import dev.oblac.kolona.i18n.*
 import kotlin.random.Random
@@ -14,13 +14,13 @@ val City.language: Language get() = when (this) {
     City.Milan -> Language.Italian
 }
 
-class GameSession(val store: PreferenceStore, val config: GameConfig = GameConfig()) {
+class GameSession(val store: Store, val config: GameConfig = GameConfig()) {
     var screen by mutableStateOf(Screen.Welcome)
-    var language by mutableStateOf(Language.fromCode(store.get("language")))
+    var language by mutableStateOf(Language.fromCode(store.string("language")))
         private set
-    var city by mutableStateOf(City.fromCode(store.get("city")))
+    var city by mutableStateOf(City.fromCode(store.string("city")))
         private set
-    var cityLanguage by mutableStateOf(store.get("city.language") == "true")
+    var cityLanguage by mutableStateOf(store.string("city.language") == "true")
         private set
     private var game by mutableStateOf<GameEngine?>(null)
     // start() makes each game's engine, so launching the app generates no map.
@@ -33,7 +33,7 @@ class GameSession(val store: PreferenceStore, val config: GameConfig = GameConfi
     private var recorded = false
 
     // Before cities there was one best, and it was Belgrade's.
-    private fun savedBest(city: City) = (store.get("best.${city.code}") ?: if (city == City.Belgrade) store.get("best") else null)
+    private fun savedBest(city: City) = (store.string("best.${city.code}") ?: if (city == City.Belgrade) store.string("best") else null)
         ?.toIntOrNull()?.coerceIn(0, 72) ?: 0
 
     fun start() {

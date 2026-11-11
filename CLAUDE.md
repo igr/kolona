@@ -6,6 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+- Gradle takes gamekit, the library of the games in `~/prj/igr/gamekit`, from `~/.m2`. Publish the pinned version first, as the README of gamekit says.
 - `just run` starts the desktop game (`./gradlew :desktopApp:run`). Close the game window before you run another Gradle task: the running game holds Gradle's project lock.
 - `./gradlew :shared:jvmTest :desktopApp:classes` runs all tests and compiles desktop. It includes the difficulty benchmark (about 12 s with three cities).
 - `./gradlew :shared:jvmTest --tests '*CityMapTest*'` runs one test class. Add `.testName` for one test.
@@ -20,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `desktopApp` only host `KolonaApp` and give a `PreferenceStore`.
+All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `desktopApp` only host `KolonaApp` and give the `Store` of gamekit for their platform.
 
 - `game/` is pure Kotlin. It has no Compose, platform, or clock code. The simulation is deterministic from its seed and runs at a fixed 60 Hz (`GameEngine`).
 - Each game builds a new `CityMap` with `generateMap(city, seed, mapScale(seed, config.maxMapScale))`:

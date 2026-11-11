@@ -26,6 +26,7 @@ kotlin {
     }
     sourceSets {
         commonMain.dependencies {
+            api(libs.gamekit)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
