@@ -1,5 +1,6 @@
 package dev.oblac.kolona.ui
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.geometry.Offset
@@ -10,6 +11,8 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.Density
 import dev.oblac.gamekit.MemoryStore
 import dev.oblac.kolona.game.City
@@ -23,6 +26,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /** Every game starts with the city dialog; taps go to the real screens. */
 @OptIn(ExperimentalComposeUiApi::class)
@@ -78,6 +82,37 @@ class CityFlowTest {
             assertEquals(Screen.Game, session.screen, "$language: the button in the city dialog must start the game")
             scene.close()
         }
+    }
+
+    // The link under the cities opens a mail to the studio in the player's mail app. The game does not start.
+    @Test fun theLinkUnderTheCitiesMailsAProposalForTheNextCity() {
+        for (language in Language.entries) {
+            val opened = mutableListOf<String>()
+            val mail = object : UriHandler { override fun openUri(uri: String) { opened += uri } }
+            val session = GameSession(MemoryStore()).apply { select(language) }
+            val scene = ImageComposeScene(360 * 2, 700 * 2, Density(2f)) {
+                CompositionLocalProvider(LocalUriHandler provides mail) { KolonaApp(session) }
+            }
+            scene.tap(360f, primaryButtonY(scene.frame()))
+            val link = lowestMint(scene.frame())
+            scene.tap(link.x, link.y)
+            scene.frame()
+            assertEquals(listOf("mailto:contact@katemariongames.com?subject=Protest%20Defender:%20next%20city"), opened, "$language")
+            assertEquals(Screen.Welcome, session.screen, "$language: the link must not start the game")
+            scene.close()
+        }
+    }
+
+    /** The lowest mint pixel above the city dialog's button, within the button's width: the link under the cities. The language box below it is unticked. */
+    private fun lowestMint(image: Image): Offset {
+        val pixels = image.toComposeImageBitmap().toPixelMap()
+        val rows = primaryButtonRows(image)
+        val middle = (rows.first() + rows.last()) / 2
+        val button = (0 until pixels.width).filter { close(pixels[it, middle], Palette.Gold) }
+        for (y in rows.first() - 1 downTo 0) for (x in button.first()..button.last()) {
+            if (close(pixels[x, y], Palette.Mint)) return Offset(x.toFloat(), y.toFloat())
+        }
+        fail("No mint above the button")
     }
 
     // The souvenir is a reward: a lost game shows none, and a won one shows it in the dialog,

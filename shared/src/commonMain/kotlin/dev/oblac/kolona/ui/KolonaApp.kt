@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -21,6 +22,8 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -67,7 +70,7 @@ internal fun Display(text: String, size: Int = 46, color: Color = Palette.Cream,
         fontSize = size.sp, lineHeight = (size * .98f).sp, textAlign = align)
 }
 
-internal enum class Symbol { Arrow, Back, Shield, Guide, Globe, Pin, Pause, Check, Close, Bomb }
+internal enum class Symbol { Arrow, Back, Shield, Guide, Globe, Pin, Pause, Check, Close, Bomb, Mail }
 
 @Composable
 internal fun SymbolIcon(symbol: Symbol, modifier: Modifier = Modifier.size(22.dp), color: Color = Palette.Gold) {
@@ -100,6 +103,7 @@ internal fun SymbolIcon(symbol: Symbol, modifier: Modifier = Modifier.size(22.dp
                 Symbol.Check -> { line(Offset(5f, 12f), Offset(10f, 17f)); line(Offset(10f, 17f), Offset(20f, 6f)) }
                 Symbol.Close -> { line(Offset(6f, 6f), Offset(18f, 18f)); line(Offset(18f, 6f), Offset(6f, 18f)) }
                 Symbol.Bomb -> { drawCircle(color, 7f, Offset(10f, 15f), style = Stroke(1.8f)); line(Offset(15f, 9f), Offset(18f, 6f)); line(Offset(18f, 6f), Offset(21f, 7f)); line(Offset(18f, 2f), Offset(18f, 3f)); line(Offset(22f, 3f), Offset(21f, 4f)) }
+                Symbol.Mail -> { drawRoundRect(color, Offset(3f, 5.5f), Size(18f, 13f), CornerRadius(2f), style = Stroke(1.5f)); line(Offset(4.5f, 7.5f), Offset(12f, 13f)); line(Offset(12f, 13f), Offset(19.5f, 7.5f)) }
             }
         }
     }
@@ -303,9 +307,14 @@ private fun BackBar(title: String, strings: Strings, onBack: () -> Unit) {
     }
 }
 
-/** Every game starts here: the player picks the city, then the march begins. Every city fits a 360 × 700 dp phone without scrolling. */
+private const val NEXT_CITY_MAIL = "mailto:contact@katemariongames.com?subject=Protest%20Defender:%20next%20city"
+
+/**
+ * Every game starts here: the player picks the city, then the march begins. Every city fits a 360 × 700 dp phone without scrolling.
+ * The [uriHandler] comes from outside the dialog. Inside, the dialog provides the platform's own handler, which a test cannot replace.
+ */
 @Composable
-private fun CityDialog(session: GameSession, strings: Strings, onDismiss: () -> Unit) = Dialog(onDismissRequest = onDismiss) {
+private fun CityDialog(session: GameSession, strings: Strings, uriHandler: UriHandler = LocalUriHandler.current, onDismiss: () -> Unit) = Dialog(onDismissRequest = onDismiss) {
     val dialogShape = RoundedCornerShape(16.dp)
     Column(Modifier.widthIn(max = 400.dp).clip(dialogShape).background(Palette.Ink).border(1.dp, Palette.Line, dialogShape)
         .verticalScroll(rememberScrollState()).padding(22.dp, 16.dp)) {
@@ -344,6 +353,13 @@ private fun CityDialog(session: GameSession, strings: Strings, onDismiss: () -> 
                 Spacer(Modifier.height(6.dp))
                 Text("${city.template.stops.first().name} → ${city.template.stops.last().name}", color = Palette.Muted, fontSize = 12.sp)
             }
+        }
+        // The player's mail app opens a mail to the studio. Without a mail app, the tap does nothing.
+        Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
+            .clickable(role = Role.Button) { runCatching { uriHandler.openUri(NEXT_CITY_MAIL) } }.padding(vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SymbolIcon(Symbol.Mail, Modifier.size(24.dp), Palette.Mint)
+            Text(strings[Copy.ProposeCity], color = Palette.Mint, fontSize = 13.sp)
         }
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(6.dp))
             .toggleable(session.cityLanguage, role = Role.Checkbox, onValueChange = session::switchLanguageWithCity).padding(vertical = 12.dp),

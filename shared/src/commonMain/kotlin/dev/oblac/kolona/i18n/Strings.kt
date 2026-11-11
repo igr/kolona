@@ -40,6 +40,7 @@ enum class Copy(val sr: String, val en: String, val fr: String, val it: String) 
     CityEyebrow("IZABERI GRAD", "CHOOSE YOUR CITY", "CHOISIS TA VILLE", "SCEGLI LA TUA CITTÀ"),
     CityHeading("Svaki grad\nima svoj trg.", "Every city\nhas its square.", "Chaque ville\na sa place.", "Ogni città\nha la sua piazza."),
     CityLanguage("Promeni i jezik", "Also switch the language", "Changer aussi la langue", "Cambia anche la lingua"),
+    ProposeCity("Predloži sledeći grad koji oslobađamo!", "Propose the next city to set free!", "Propose la prochaine ville à libérer !", "Proponi la prossima città da liberare!"),
     Belgrade("Beograd", "Belgrade", "Belgrade", "Belgrado"),
     Paris("Pariz", "Paris", "Paris", "Parigi"),
     Milan("Milano", "Milan", "Milan", "Milano"),
