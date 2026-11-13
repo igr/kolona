@@ -1758,8 +1758,16 @@ private fun mix(n: Int): Int {
     return x xor (x ushr 16)
 }
 
+/** Where the marker of a point [p] off the [view] goes: on the edge, below the boxes at the top, and clear of the bomb button in the lower-left [corner]. */
+internal fun markerSpot(p: Offset, view: Size, corner: Size, density: Float): Offset {
+    val inset = 20f * density
+    val spot = Offset(p.x.coerceIn(inset, view.width - inset), p.y.coerceIn(78f * density, view.height - 36f * density))
+    val top = view.height - corner.height - 4f * density
+    return if (spot.x < corner.width && spot.y > top) spot.copy(y = top) else spot
+}
+
 @Composable
-fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revision: Int, modifier: Modifier, aim: Vec2? = null) {
+fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revision: Int, modifier: Modifier, aim: Vec2? = null, corner: Size = Size.Zero) {
     // A frame lays out the street names plus the sprite labels; the default cache of 8 would miss every time.
     val measurer = rememberTextMeasurer(cacheSize = 32)
     val paint = remember(engine.map) { MapPaint(engine.map) }
@@ -1825,9 +1833,9 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
                 drawCircle(Palette.Gold.copy(alpha = t * .32f), if (effect.blast) (1 - t) * 120 else (1 - t) * 15, effect.position.offset())
                 if (effect.blast) drawCircle(Palette.Gold.copy(alpha = t), (1 - t) * 110, effect.position.offset(), style = Stroke(3f))
             }
-            // A swipe from the defender: where the bomb will land and what it will hit. Faint while the bomb recharges or the group there is too small.
+            // A swipe from the defender: where the bomb will land and what it will hit. Faint while the bomb recharges.
             aim?.let { target ->
-                val color = if (engine.bombCooldown > 0f || engine.attackersNear(target) < GameEngine.BOMB_GROUP) Palette.Faint else Palette.Gold
+                val color = if (engine.bombCooldown > 0f) Palette.Faint else Palette.Gold
                 drawLine(color.copy(alpha = .8f), engine.hero.position.offset(), target.offset(), 2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
                 drawCircle(color.copy(alpha = .12f), GameEngine.BOMB_RADIUS, target.offset())
                 drawCircle(color, GameEngine.BOMB_RADIUS, target.offset(), style = Stroke(1.5f))
@@ -1839,7 +1847,7 @@ fun WorldCanvas(engine: GameEngine, camera: HeroCamera, strings: Strings, revisi
             val p = camera.worldToScreen(point, size.width).offset()
             val inset = 20f * density
             if (p.x in inset..size.width - inset && p.y in inset..size.height - inset) return
-            val pos = Offset(p.x.coerceIn(inset, size.width - inset), p.y.coerceIn(78f * density, size.height - 36f * density))
+            val pos = markerSpot(p, size, corner, density)
             drawCircle(Palette.Ink, 12f * density, pos)
             drawCircle(color, 12f * density, pos, style = Stroke(1.2f * density))
             label(measurer, text, pos, color, 11f * density)

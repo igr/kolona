@@ -7,13 +7,14 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import dev.oblac.gamekit.DesktopAudio
 import dev.oblac.gamekit.DesktopStore
 import dev.oblac.kolona.i18n.GameIdentity
 import dev.oblac.kolona.ui.GameSession
 import dev.oblac.kolona.ui.KolonaApp
 
 fun main() = application {
-    val session = remember { GameSession(DesktopStore("dev/oblac/kolona")) }
+    val session = remember { GameSession(DesktopStore("dev/oblac/kolona"), audio = DesktopAudio()) }
     Window(
         onCloseRequest = ::exitApplication,
         title = GameIdentity.NAME,

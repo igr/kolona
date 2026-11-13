@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -11,7 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -22,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.isActive
 import dev.oblac.kolona.game.*
 import dev.oblac.kolona.i18n.*
@@ -37,6 +41,7 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
     // The phase box and the minimap cover the top of the map, so the camera may go that far past the map's top edge.
     var mapWidth by remember { mutableIntStateOf(0) }
     var hudHeight by remember { mutableIntStateOf(0) }
+    var bombCorner by remember { mutableStateOf(Size.Zero) }
     fun fitCamera() {
         if (mapWidth > 0) camera.topInset = hudHeight * camera.viewWidth / mapWidth
         camera.follow(engine.hero.position, 0f, snap = true)
@@ -66,6 +71,13 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                     }
                 }
                 Spacer(Modifier.width(10.dp))
+                // As in the original, the sound switch sits next to the pause.
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, Palette.Line, RoundedCornerShape(8.dp))
+                    .semantics { contentDescription = strings[Copy.Sound] }.toggleable(session.sound, role = Role.Switch, onValueChange = session::switchSound),
+                    contentAlignment = Alignment.Center) {
+                    SymbolIcon(if (session.sound) Symbol.Speaker else Symbol.Muted, Modifier.size(20.dp), if (session.sound) Palette.Cream else Palette.Faint)
+                }
+                Spacer(Modifier.width(8.dp))
                 Box(Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).border(1.dp, Palette.Line, RoundedCornerShape(8.dp))
                     .semantics { contentDescription = strings[Copy.Pause] }.clickable(role = Role.Button) { session.pause() }, contentAlignment = Alignment.Center) {
                     SymbolIcon(Symbol.Pause, Modifier.size(16.dp), Palette.Cream)
@@ -92,7 +104,7 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                         fun world(p: Offset) = camera.screenToWorld(Vec2(p.x, p.y), size.width.toFloat())
                         detectDragGestures(onDragStart = { swipe.start(engine, world(it)) }, onDragEnd = { swipe.end(engine) },
                             onDragCancel = { swipe.cancel() }, onDrag = { change, _ -> swipe.move(world(change.position)) })
-                    }, swipe.aim)
+                    }, swipe.aim, bombCorner)
                 Row(Modifier.fillMaxWidth().onSizeChanged { hudHeight = it.height; fitCamera() }.padding(12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                     Column(Modifier.clip(RoundedCornerShape(6.dp)).background(Palette.Ink.copy(alpha = .91f)).padding(10.dp, 8.dp)) {
@@ -102,22 +114,8 @@ internal fun GameScreen(session: GameSession, strings: Strings) {
                     }
                     RouteMiniature(camera, engine, frame, Modifier.size(82.dp, 66.dp).clip(RoundedCornerShape(6.dp)).background(Palette.Ink.copy(alpha = .85f)).padding(5.dp))
                 }
-            }
-            Row(Modifier.fillMaxWidth().background(Palette.Panel).padding(18.dp, 14.dp), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SymbolIcon(Symbol.Bomb, Modifier.size(27.dp), if (engine.bombCooldown > 0) Palette.Faint else Palette.Gold)
-                Column(Modifier.weight(1f)) {
-                    Text(strings[if (engine.bombCooldown > 0) Copy.BombWait else Copy.BombReady], color = if (engine.bombCooldown > 0) Palette.Muted else Palette.Gold,
-                        fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Text(strings[Copy.BombHint], color = Palette.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp))
-                }
-                if (engine.bombCooldown > 0) Display("${ceil(engine.bombCooldown).toInt()}s", 29, Palette.Faint)
-                else SymbolIcon(Symbol.Arrow, Modifier.size(27.dp), Palette.Gold)
-            }
-            Row(Modifier.fillMaxWidth().padding(16.dp, 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                Legend(strings[Copy.Crowd], Palette.Mint)
-                Legend(strings[Copy.Threat], Palette.Red)
-                Legend(strings[Copy.You], Palette.Gold)
+                // The bomb floats over the lower-left corner of the map, and the edge markers keep clear of it.
+                BombButton(engine.bombReload, strings, Modifier.align(Alignment.BottomStart).onSizeChanged { bombCorner = it.toSize() }.padding(12.dp))
             }
         }
         if (status != GameStatus.Playing) {
@@ -186,11 +184,22 @@ private fun Souvenir(city: City, strings: Strings) {
     }
 }
 
+/** The bomb under the map: its icon, its name below, and a bar that fills up while it reloads. All gold when the bomb is ready. */
 @Composable
-private fun Legend(text: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        Box(Modifier.size(5.dp).clip(RoundedCornerShape(3.dp)).background(color))
-        Text(text, color = Palette.Faint, fontSize = 8.sp, letterSpacing = 1.sp)
+internal fun BombButton(reload: Float, strings: Strings, modifier: Modifier = Modifier) {
+    val ready = reload >= 1f
+    val shape = RoundedCornerShape(10.dp)
+    Column(modifier.clip(shape).background(Palette.Panel).border(1.dp, if (ready) Palette.Gold else Palette.Line, shape)
+        .padding(12.dp, 7.dp).width(IntrinsicSize.Max), horizontalAlignment = Alignment.CenterHorizontally) {
+        SymbolIcon(Symbol.Bomb, Modifier.size(20.dp), if (ready) Palette.Gold else Palette.Faint)
+        Spacer(Modifier.height(2.dp))
+        Text(strings[Copy.Bomb], color = if (ready) Palette.Gold else Palette.Muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Spacer(Modifier.height(4.dp))
+        Canvas(Modifier.fillMaxWidth().height(3.dp)) {
+            val radius = CornerRadius(size.height / 2)
+            drawRoundRect(Palette.Deep, cornerRadius = radius)
+            drawRoundRect(Palette.Gold, size = Size(size.width * reload, size.height), cornerRadius = radius)
+        }
     }
 }
 

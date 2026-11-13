@@ -1,6 +1,7 @@
 package dev.oblac.kolona.ui
 
 import androidx.compose.runtime.*
+import dev.oblac.gamekit.Audio
 import dev.oblac.gamekit.Store
 import dev.oblac.kolona.game.*
 import dev.oblac.kolona.i18n.*
@@ -14,7 +15,7 @@ val City.language: Language get() = when (this) {
     City.Milan -> Language.Italian
 }
 
-class GameSession(val store: Store, val config: GameConfig = GameConfig()) {
+class GameSession(val store: Store, val config: GameConfig = GameConfig(), audio: Audio = Silence) {
     var screen by mutableStateOf(Screen.Welcome)
     var language by mutableStateOf(Language.fromCode(store.string("language")))
         private set
@@ -22,6 +23,10 @@ class GameSession(val store: Store, val config: GameConfig = GameConfig()) {
         private set
     var cityLanguage by mutableStateOf(store.string("city.language") == "true")
         private set
+    /** As in the original, the sound is off until the player turns it on. */
+    var sound by mutableStateOf(store.string("sound") == "true")
+        private set
+    private val sounds = Sounds(audio)
     private var game by mutableStateOf<GameEngine?>(null)
     // start() makes each game's engine, so launching the app generates no map.
     val engine: GameEngine get() = game ?: GameEngine(config = config).also { game = it }
@@ -42,6 +47,7 @@ class GameSession(val store: Store, val config: GameConfig = GameConfig()) {
         recorded = false
         screen = Screen.Game
         revision++
+        hear(Cue.Start)
     }
     // Focus loss calls pause() before the first game too, and that must not generate a map.
     fun pause() { game?.pause(); revision++ }
@@ -62,8 +68,16 @@ class GameSession(val store: Store, val config: GameConfig = GameConfig()) {
         store.put("city.language", on.toString())
         if (on) select(city.language)
     }
+    fun switchSound(on: Boolean) {
+        sound = on
+        store.put("sound", on.toString())
+        hear(Cue.SoundOn)
+    }
+    private fun hear(cue: Cue) { if (sound) sounds.play(cue) }
     fun tick(dt: Float) {
         engine.advance(dt)
+        engine.cues.distinct().forEach(::hear)
+        engine.cues.clear()
         if (!recorded && engine.status == GameStatus.Won) {
             recorded = true
             val played = engine.map.city

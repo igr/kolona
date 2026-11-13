@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `desktopApp` only host `KolonaApp` and give the `Store` of gamekit for their platform.
+All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `desktopApp` only host `KolonaApp` and give the `Store` and the `Audio` of gamekit for their platform.
 
 - `game/` is pure Kotlin. It has no Compose, platform, or clock code. The simulation is deterministic from its seed and runs at a fixed 60 Hz (`GameEngine`).
 - Each game builds a new `CityMap` with `generateMap(city, seed, mapScale(seed, config.maxMapScale))`:
@@ -37,7 +37,8 @@ All game code is in `shared/`. `androidApp`, `iosApp` (SwiftUI host) and `deskto
   - `GameArt.kt` draws everything on the map. `MapPaint` caches paths. `city()` draws the map, culled to the camera rect. Each `building()`, `landmark()`, `prop()`, and `souvenir()` dispatches by city or kind. `CityArtwork` draws the welcome and menu art from a fixed preview map.
   - `GameSession.kt` holds the session state and preferences.
 - `i18n/Strings.kt`: `Language` (English default, Serbian, French, Italian), `Copy(sr, en, fr, it)` (every entry needs all four), and the `Strings` helpers. `GameIdentity` holds the brand, the same in every language: Protest Defender, with PROTEST above DEFENDER in `Brand()`. App IDs stay `dev.oblac.kolona`. `City.language` (`GameSession.kt`) is the language the "Also switch the language" checkbox picks. Milan maps to Italian.
-- Saved preference keys: `language`, `city`, `city.language`, `best.<city code>` (the legacy `best` belongs to Belgrade). City codes are saved, so never rename one.
+- Sound: the engine reports what the player may hear in `cues`, and `GameSession` plays them only while the sound is on. `ui/Sounds.kt` gives each cue the tones of the original web game, and gamekit's `wav(tones)` makes them as WAV data.
+- Saved preference keys: `language`, `city`, `city.language`, `sound`, `best.<city code>` (the legacy `best` belongs to Belgrade). City codes are saved, so never rename one.
 - Text style:
   - Map labels always use local names, in every language.
   - The crowd is the protest in every language, never a march or a column: "protest" and "demonstranti" (sr, masculine), "the protest" and "protesters" (en), "la manif" and "manifestants" (fr), "la protesta" and "manifestanti" (it). French and Italian use "tu".

@@ -70,7 +70,7 @@ internal fun Display(text: String, size: Int = 46, color: Color = Palette.Cream,
         fontSize = size.sp, lineHeight = (size * .98f).sp, textAlign = align)
 }
 
-internal enum class Symbol { Arrow, Back, Shield, Guide, Globe, Pin, Pause, Check, Close, Bomb, Mail }
+internal enum class Symbol { Arrow, Back, Shield, Guide, Globe, Pin, Pause, Check, Close, Bomb, Mail, Speaker, Muted }
 
 @Composable
 internal fun SymbolIcon(symbol: Symbol, modifier: Modifier = Modifier.size(22.dp), color: Color = Palette.Gold) {
@@ -104,6 +104,14 @@ internal fun SymbolIcon(symbol: Symbol, modifier: Modifier = Modifier.size(22.dp
                 Symbol.Close -> { line(Offset(6f, 6f), Offset(18f, 18f)); line(Offset(18f, 6f), Offset(6f, 18f)) }
                 Symbol.Bomb -> { drawCircle(color, 7f, Offset(10f, 15f), style = Stroke(1.8f)); line(Offset(15f, 9f), Offset(18f, 6f)); line(Offset(18f, 6f), Offset(21f, 7f)); line(Offset(18f, 2f), Offset(18f, 3f)); line(Offset(22f, 3f), Offset(21f, 4f)) }
                 Symbol.Mail -> { drawRoundRect(color, Offset(3f, 5.5f), Size(18f, 13f), CornerRadius(2f), style = Stroke(1.5f)); line(Offset(4.5f, 7.5f), Offset(12f, 13f)); line(Offset(12f, 13f), Offset(19.5f, 7.5f)) }
+                Symbol.Speaker, Symbol.Muted -> {
+                    val body = Path().apply { moveTo(3.5f, 9.5f); lineTo(7f, 9.5f); lineTo(11.5f, 5.5f); lineTo(11.5f, 18.5f); lineTo(7f, 14.5f); lineTo(3.5f, 14.5f); close() }
+                    drawPath(body, color, style = Stroke(1.5f))
+                    if (symbol == Symbol.Speaker) {
+                        drawArc(color, -50f, 100f, false, Offset(8f, 8f), Size(8f, 8f), style = Stroke(1.5f, cap = StrokeCap.Round))
+                        drawArc(color, -50f, 100f, false, Offset(4.5f, 4.5f), Size(15f, 15f), style = Stroke(1.5f, cap = StrokeCap.Round))
+                    } else { line(Offset(15.5f, 9.5f), Offset(20.5f, 14.5f)); line(Offset(20.5f, 9.5f), Offset(15.5f, 14.5f)) }
+                }
             }
         }
     }

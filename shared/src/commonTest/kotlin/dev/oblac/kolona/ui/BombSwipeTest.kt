@@ -1,8 +1,6 @@
 package dev.oblac.kolona.ui
 
 import dev.oblac.kolona.game.CommandResult
-import dev.oblac.kolona.game.Enemy
-import dev.oblac.kolona.game.EnemyKind
 import dev.oblac.kolona.game.GameConfig
 import dev.oblac.kolona.game.GameEngine
 import dev.oblac.kolona.game.Vec2
@@ -13,10 +11,8 @@ class BombSwipeTest {
     private val game = GameEngine(1, GameConfig(spawnEnemies = false))
     private val hero = game.hero.position
     private val swipe = BombSwipe()
-    private fun group(at: Vec2) = repeat(4) { game.enemies += Enemy(it, EnemyKind.Thug, at + Vec2(it * 12f, 0f)).apply { warning = 0f } }
 
     @Test fun aSwipeFromTheDefenderThrowsABombWhereItEnds() {
-        group(hero + Vec2(150f, -60f))
         swipe.start(game, hero + Vec2(12f, -20f))
         swipe.move(hero + Vec2(150f, -60f))
         assertEquals(hero + Vec2(150f, -60f), swipe.aim)
@@ -42,7 +38,6 @@ class BombSwipeTest {
     }
 
     @Test fun aSwipeWhileTheBombRechargesThrowsNothing() {
-        group(hero + Vec2(0f, 200f))
         repeat(2) {
             swipe.start(game, hero)
             swipe.move(hero + Vec2(0f, 200f))

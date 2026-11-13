@@ -8,6 +8,8 @@ enum class EnemyKind(val health: Int, val speed: Float, val radius: Float) {
     Thug(3, 39f, 11f), Police(4, 33f, 12f), Car(10, 52f, 20f)
 }
 enum class CommandResult { Move, Bomb, CoolingDown, Ignored }
+/** What the player may hear. The engine reports what happens in the game; the session adds [Start] and [SoundOn]. */
+enum class Cue { Start, SoundOn, Move, Fire, Bomb, Blast, Beaten, Wrecked, Hit, Phase, Speech, Won, Lost }
 
 class Hero(var position: Vec2) {
     var path = mutableListOf<Vec2>()
@@ -75,6 +77,9 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
     val bombs = mutableListOf<Bomb>()
     val effects = mutableListOf<Effect>()
     val fallen = mutableListOf<Fallen>()
+    /** What happened that the player may hear, since the session last played it. */
+    val cues = mutableListOf<Cue>()
+    private var heardPhase = 0
     var status = GameStatus.Playing
         private set
     var elapsed = 0f
@@ -85,6 +90,8 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         private set
     var bombCooldown = 0f
         private set
+    /** How far the bomb has reloaded: 0 right after a throw, 1 when it is ready. */
+    val bombReload get() = 1f - bombCooldown / BOMB_RELOAD
     var defended = 0
         private set
     /** How far the screen jolts, in points, as in the original: a hit on the protest, a bomb blast, a wrecked car. Drawing only. */
@@ -119,16 +126,13 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         }
     }
 
-    /** Attackers on the map within a bomb's blast of [target]. Beaten ones are off the list, so their bodies never count. */
-    fun attackersNear(target: Vec2) = enemies.count { it.health > 0 && it.warning <= 0f && it.position.distanceTo(target) <= BOMB_RADIUS }
-
-    /** The hero throws a bomb at [target], but only at a group of at least [BOMB_GROUP] attackers. The next one waits for the recharge. */
+    /** The hero throws a bomb at [target], with or without attackers there. The next one waits for the recharge. */
     fun throwBomb(target: Vec2): CommandResult {
         if (status != GameStatus.Playing || !target.x.isFinite() || !target.y.isFinite()) return CommandResult.Ignored
         if (bombCooldown > 0) return CommandResult.CoolingDown
-        if (attackersNear(target) < BOMB_GROUP) return CommandResult.Ignored
         bombs += Bomb(hero.position, target)
-        bombCooldown = 5f
+        bombCooldown = BOMB_RELOAD
+        cues += Cue.Bomb
         return CommandResult.Bomb
     }
 
@@ -136,12 +140,20 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
     fun command(point: Vec2): CommandResult {
         if (status != GameStatus.Playing || !point.x.isFinite() || !point.y.isFinite()) return CommandResult.Ignored
         hero.path = map.path(hero.position, point)
-        if (hero.moving) hero.barricade = 0f
-        return if (hero.moving) CommandResult.Move else CommandResult.Ignored
+        if (!hero.moving) return CommandResult.Ignored
+        hero.barricade = 0f
+        cues += Cue.Move
+        return CommandResult.Move
+    }
+
+    private fun end(result: GameStatus) {
+        status = result
+        cues += if (result == GameStatus.Won) Cue.Won else Cue.Lost
     }
 
     private fun update(dt: Float) {
         elapsed += dt
+        if (phase > heardPhase) { heardPhase = phase; cues += Cue.Phase }
         shake *= .9f
         bombCooldown = max(0f, bombCooldown - dt)
         if (speechRemaining > 0f) speechRemaining = max(0f, speechRemaining - dt)
@@ -150,6 +162,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             if (speechIndex < config.speechesAt.size && marchTime >= config.speechesAt[speechIndex]) {
                 speechRemaining = config.speechSeconds
                 speechIndex++
+                cues += Cue.Speech
             }
         }
         val front = 280f + marchTime / config.marchSeconds * (map.route.length - 280f + 225f)
@@ -161,9 +174,9 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
                 p.position = map.route.at(s, p.offset)
             }
         }
-        if (survivors < MIN_SURVIVORS) { status = GameStatus.Lost; return }
+        if (survivors < MIN_SURVIVORS) { end(GameStatus.Lost); return }
         val active = people.filter { it.alive && !it.arrived }
-        if (active.isEmpty()) { status = GameStatus.Won; return }
+        if (active.isEmpty()) { end(GameStatus.Won); return }
 
         repeat(4) {
             val crowded = active.any { it.position.distanceTo(hero.position) < 20f }
@@ -178,6 +191,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
                     hero.angle = atan2(direction.y, direction.x)
                     shots += Shot(hero.position, enemy)
                     hero.fireCooldown = .115f
+                    cues += Cue.Fire
                 }
         }
         if (config.spawnEnemies) {
@@ -211,7 +225,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
             if (enemy.health > 0 && enemy.position.distanceTo(target.position) < enemy.kind.radius + 12f && enemy.attackCooldown <= 0f) {
                 enemy.attackCooldown = 1.1f
                 val victims = if (enemy.kind == EnemyKind.Car) active.filter { it.position.distanceTo(enemy.position) < 42f }.take(3) else listOf(target)
-                victims.forEach { if (it.alive) { it.health--; it.hit = .25f; shake = max(shake, 3f) } }
+                victims.forEach { if (it.alive) { it.health--; it.hit = .25f; shake = max(shake, 3f); cues += Cue.Hit } }
             }
         }
         // Attackers keep about a body's width apart: two on one spot look like one, so four would pass for three.
@@ -243,20 +257,25 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
                 enemies.filter { it.position.distanceTo(bomb.target) <= BOMB_RADIUS }.forEach { it.health -= 14 }
                 effects += Effect(bomb.target, blast = true)
                 shake = max(shake, 9f)
+                cues += Cue.Blast
             }
         }
         bombs.removeAll { it.age >= .6f }
         shots.removeAll { it.life <= 0 }
         fallen.forEach { it.age += dt }
         fallen.removeAll { it.age >= FALL_SECONDS }
-        enemies.forEach { if (it.health <= 0 && it.kind != EnemyKind.Car) fallen += Fallen(it.position, it.id, it.kind) }
+        enemies.forEach {
+            if (it.health > 0) return@forEach
+            if (it.kind == EnemyKind.Car) cues += Cue.Wrecked
+            else { fallen += Fallen(it.position, it.id, it.kind); cues += Cue.Beaten }
+        }
         if (enemies.any { it.health <= 0 && it.kind == EnemyKind.Car }) shake = max(shake, 5f)
         people.forEach { if (!it.alive && !it.fell) { it.fell = true; fallen += Fallen(it.position, it.id, null) } }
         defended += enemies.count { it.health <= 0 }
         enemies.removeAll { it.health <= 0 }
         effects.forEach { it.life -= dt }
         effects.removeAll { it.life <= 0 }
-        if (survivors < MIN_SURVIVORS) status = GameStatus.Lost
+        if (survivors < MIN_SURVIVORS) end(GameStatus.Lost)
     }
 
     private fun spawnWave(active: List<Marcher>) {
@@ -295,7 +314,7 @@ class GameEngine(seed: Int = Random.nextInt(), val config: GameConfig = GameConf
         const val MIN_SURVIVORS = 36
         const val FIRE_RANGE = 285f
         const val BOMB_RADIUS = 110f
-        const val BOMB_GROUP = 4
+        const val BOMB_RELOAD = 5f
         const val FALL_SECONDS = 1.2f
         // Spots around a wanted one, nearest first: 6 units apart, up to 60 away.
         private val AROUND = (-10..10).flatMap { i -> (-10..10).map { j -> Vec2(i * 6f, j * 6f) } }.filter { it.length() <= 60f }.sortedBy { it.length() }
