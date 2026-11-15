@@ -7,8 +7,12 @@ pluginManagement {
 }
 dependencyResolutionManagement {
     repositories {
-        // gamekit, the library of the games in ~/prj/igr/gamekit, comes from the local Maven repository: see its README.
-        mavenLocal { content { includeGroup("dev.oblac.gamekit") } }
+        // gamekit, the library of the games, comes from GitHub Packages of igr/gamekit. The login is in ~/.gradle/gradle.properties: see the README of gamekit.
+        maven("https://maven.pkg.github.com/igr/gamekit") {
+            name = "gamekit"
+            credentials(PasswordCredentials::class)
+            content { includeGroup("dev.oblac.gamekit") }
+        }
         google()
         mavenCentral()
     }

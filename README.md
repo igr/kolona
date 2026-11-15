@@ -12,7 +12,7 @@ The base Kotlin package and the Android, iOS, and desktop app ID are `dev.oblac.
 
 Use JDK 17 or 21. The Gradle wrapper is included and verifies the distribution checksum. The first build downloads dependencies.
 
-The game uses gamekit, the library of the games in `~/prj/igr/gamekit`. Gradle takes it from the local Maven repository, `~/.m2`. Before the first build, publish the version that `gradle/libs.versions.toml` pins: see the README of gamekit.
+The game uses gamekit, the library of the games in `~/prj/igr/gamekit`. Gradle takes it from GitHub Packages of the private repository `igr/gamekit`. The login goes in `~/.gradle/gradle.properties`, `gamekitUsername` and `gamekitPassword`: see the README of gamekit.
 
 ### Desktop
 

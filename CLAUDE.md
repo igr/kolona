@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- Gradle takes gamekit, the library of the games in `~/prj/igr/gamekit`, from `~/.m2`. Publish the pinned version first, as the README of gamekit says.
+- Gradle takes gamekit, the library of the games in `~/prj/igr/gamekit`, from GitHub Packages of `igr/gamekit`, with the login in `~/.gradle/gradle.properties`, as the README of gamekit says.
 - `just run` starts the desktop game (`./gradlew :desktopApp:run`). Close the game window before you run another Gradle task: the running game holds Gradle's project lock.
 - `./gradlew :shared:jvmTest :desktopApp:classes` runs all tests and compiles desktop. It includes the difficulty benchmark (about 12 s with three cities).
 - `./gradlew :shared:jvmTest --tests '*CityMapTest*'` runs one test class. Add `.testName` for one test.
