@@ -1,6 +1,6 @@
 # Google Play listing
 
-Basic information for the first beta, on the internal testing track. Copy these into Play Console. Character counts are within Google's limits.
+Basic information for the store listing, the beta on the internal testing track, and the 1.0.0 release. Copy these into Play Console. Character counts are within Google's limits.
 
 ## App details
 
@@ -56,6 +56,19 @@ No ads. No accounts. No data collected.
 
 First beta. Play a game in Belgrade, Paris and Milan. Try the four languages with the globe button in the main menu (pause the game and tap MAIN MENU) or with the language box in the city dialog. Tell us what felt too hard or too easy, and what looked wrong on your device.
 
+## Production release
+
+| Field | Value |
+|---|---|
+| Track | Production |
+| Version | 1.0.0. The version code is the commit count. |
+
+`just release-android` uploads this commit as a draft release on the production track. Add the release notes, review the release in Play Console, and roll it out. Play Console accepts the first production release only when the store listing, the graphics, and the app content are complete. A personal developer account made after November 2023 must first run a closed test with at least 12 testers for 14 days.
+
+### Release notes (276/500)
+
+First release. Guard a protest through Belgrade, Paris and Milan. Tap to move, stop to fire, and swipe from your defender to throw a bomb. Bring at least 36 of the 72 people to the square. Turn on the sound with the speaker button. Play in English, Serbian, French or Italian.
+
 ## App content
 
 | Question | Answer |
@@ -64,19 +77,20 @@ First beta. Play a game in Belgrade, Paris and Milan. Try the four languages wit
 | Ads | No, the app has no ads. |
 | Content rating | Category: Game. Violence: yes, cartoon violence against human characters (police and thugs), with no blood; a beaten character falls over and fades away. Answer "No" to every other question. Expect PEGI 12 / ESRB Everyone 10+. |
 | Target audience | 13 and older. Younger age groups add the Families policy. |
-| Data safety | The app does not collect or share any user data. The language, the city and the best rescues stay on the device. |
+| Data safety | The app does not collect or share any user data. The language, the city, the sound setting, and the best rescues stay on the device. |
 | Advertising ID | No. |
 | Government, financial, health, news apps | No. |
 
 ## Graphics
 
 - App icon (512 × 512): `icon-512.png`, drawn from the Android launcher icon.
-- Feature graphic (1024 × 500) and phone screenshots: not made yet. Closed testing and production need them; internal testing does not.
+- Feature graphic (1024 × 500): `feature-graphic.png`. It shows the brand and the line "Lead the protest to the square." beside the defender at his barricade.
+- Phone screenshots (1080 × 1920): `screenshots/1-welcome.png` to `screenshots/6-souvenir.png`. They show the welcome screen, the city dialog, a defense in Belgrade, a bomb blast in Paris, a speech in Milan, and a won game with its souvenir. The game renders them itself, so they have no status bar.
 
 ## Build
 
 - `./gradlew :androidApp:bundleRelease` makes `androidApp/build/outputs/bundle/release/androidApp-release.aab`. Upload it in Internal testing > Create new release.
-- Version 0.1.0. A plain `bundleRelease` has version code 1. Upload that first bundle by hand: Google Play takes the first bundle of an app only in Play Console.
+- Version 1.0.0. A plain `bundleRelease` has version code 1. Upload that first bundle by hand: Google Play takes the first bundle of an app only in Play Console.
 - After that, `just beta-android` builds and uploads this commit to internal testing, with the commit count as the version code. It needs the Play service account key `~/.android/sisyphus-play.json`, with access to this app in Play Console (Users and permissions).
 - The bundle is signed with the upload key named in `keystore.properties`, which is not in git. Without that file the bundle is unsigned, and Play rejects it. Make the key once; `keytool` asks for a password and your name:
 

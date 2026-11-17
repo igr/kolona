@@ -21,7 +21,7 @@ android {
         targetSdk = 37
         // `just beta` passes the commit count, so each upload is higher than the last.
         versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
     }
     signingConfigs {
         if (keystore != null) create("upload") {

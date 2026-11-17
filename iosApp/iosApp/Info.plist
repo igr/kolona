@@ -15,8 +15,6 @@
     <key>UILaunchScreen</key><dict/>
     <key>UISupportedInterfaceOrientations</key>
     <array><string>UIInterfaceOrientationPortrait</string></array>
-    <key>UISupportedInterfaceOrientations~ipad</key>
-    <array><string>UIInterfaceOrientationPortrait</string></array>
     <key>UIRequiresFullScreen</key><true/>
     <key>UIUserInterfaceStyle</key><string>Dark</string>
     <key>CADisableMinimumFrameDurationOnPhone</key><true/>

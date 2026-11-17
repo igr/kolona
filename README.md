@@ -57,7 +57,7 @@ xcodebuild -project iosApp/iosApp.xcodeproj -scheme Kolona \
   -derivedDataPath iosApp/DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
-Minimum iOS is 16; device and Apple Silicon simulator targets are included. Both iPhone and iPad declare portrait-only support. Scene changes pause the game. There is no Intel simulator target.
+Minimum iOS is 16; device and Apple Silicon simulator targets are included. The app runs on iPhone only, in portrait. Scene changes pause the game. There is no Intel simulator target.
 
 ### Store uploads
 
@@ -201,4 +201,4 @@ Pinned toolchain: Kotlin 2.4.21, Compose Multiplatform 1.12.1, Android Gradle Pl
 
 ## Assets
 
-Vector artwork is implemented in Kotlin. The only images are the app icons for the stores and the pages (`playstore/icon-512.png`, the iOS `AppIcon`, and `docs/img/icon.png`), drawn from the Android launcher icon `ic_kolona.xml`: a flat gold raised fist on the dark night blue, with the arm running off the bottom edge. The brand in the header draws the same fist in ink on gold (`Fist` in `KolonaApp.kt`). Barlow Condensed and DM Sans are bundled under the SIL Open Font License; copies are in `licenses/`. No reference-site photographs, JavaScript, or external runtime assets are bundled.
+Vector artwork is implemented in Kotlin. The only images are the app icons for the stores and the pages (`playstore/icon-512.png`, the iOS `AppIcon`, and `docs/img/icon.png`), drawn from the Android launcher icon `ic_kolona.xml`: a flat gold raised fist on the dark night blue, with the arm running off the bottom edge. The brand in the header draws the same fist in ink on gold (`Fist` in `KolonaApp.kt`). The store screenshots (`playstore/screenshots/` at 1080 × 1920 for Google Play, `appstore/screenshots/` at 1320 × 2868 for the App Store) and the Play feature graphic (`playstore/feature-graphic.png`, 1024 × 500) are rendered from the game itself, as 24-bit PNG files without a status bar. Barlow Condensed and DM Sans are bundled under the SIL Open Font License; copies are in `licenses/`. No reference-site photographs, JavaScript, or external runtime assets are bundled.

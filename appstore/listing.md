@@ -1,6 +1,6 @@
 # App Store listing
 
-Basic information for the first beta, on TestFlight. Copy these into App Store Connect. Character counts are within Apple's limits.
+Basic information for the App Store page, the beta on TestFlight, and the 1.0.0 release. Copy these into App Store Connect. Character counts are within Apple's limits.
 
 ## App information
 
@@ -20,6 +20,30 @@ Basic information for the first beta, on TestFlight. Copy these into App Store C
 | Privacy Policy URL | https://igr.github.io/kolona/privacy.html |
 
 The name under the icon on the phone is also "Protest Defender"; the home screen may shorten it. If the store says the name is taken, add a word, for example "Protest Defender Game".
+
+## App Store page
+
+### Promotional Text (144/170)
+
+Guard a protest of 72 people through real streets of Belgrade, Paris and Milan. Hold the line, throw bombs, and bring the protest to the square.
+
+### Description (1288/4000)
+
+The same text as the full description of the Google Play listing (`playstore/listing.md`).
+
+### Keywords (92/100)
+
+escort,defense,barricade,crowd,demonstration,rally,action,arcade,belgrade,paris,milan,street
+
+The words of the name are already found, so they are not keywords.
+
+### Screenshots
+
+6.9-inch iPhone (1320 × 2868): `screenshots/1-welcome.png` to `screenshots/6-souvenir.png`. They show the welcome screen, the city dialog, a defense in Belgrade, a bomb blast in Paris, a speech in Milan, and a won game with its souvenir. App Store Connect scales them for the smaller iPhones. The game renders them itself, so they have no status bar.
+
+### Notes for App Review
+
+The same as the notes for Beta App Review below.
 
 ## TestFlight
 
@@ -49,9 +73,10 @@ No account or login is needed. Tap ENTER THE CITY, choose a city, and tap DEFEND
 ## Build
 
 - `just beta-ios` archives this commit and uploads it to App Store Connect with `iosApp/ExportOptions.plist`, as the account signed in to Xcode. The Organizer works too (Product > Archive, then Distribute App > TestFlight & App Store). The signing team is K5GKT84X3Y, as in sisyphus.
-- Version 0.1.0. `just beta-ios` sets the build number to the commit count, so each upload is higher. `Info.plist` reads the version and the build number from the project.
+- Version 1.0.0. `just beta-ios` sets the build number to the commit count, so each upload is higher. `Info.plist` reads the version and the build number from the project.
+- `just release-ios` archives this commit and uploads it to App Store Connect in the same way. Add the build to version 1.0.0, fill in the App Store page, and submit it for review.
 - `PrivacyInfo.xcprivacy` declares the UserDefaults and file timestamp APIs, as in sisyphus. `Info.plist` sets `ITSAppUsesNonExemptEncryption` to NO, so uploads skip the encryption question.
-- The project targets iPhone and iPad, and TestFlight runs on both. The App Store will then also need iPad screenshots. Set the target to iPhone only if you do not want iPad.
+- The project targets iPhone only, so the App Store needs only iPhone screenshots.
 
 ## Pages
 

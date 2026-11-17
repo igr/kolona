@@ -7,7 +7,7 @@ object GameIdentity {
     const val NAME = "Protest Defender"
     const val SUBTITLE = "PROTEST"
     const val WORDMARK = "DEFENDER"
-    const val VERSION = "0.1.0"
+    const val VERSION = "1.0.0"
 }
 
 enum class Language(val code: String, val nativeName: String) {
