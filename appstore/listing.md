@@ -39,7 +39,44 @@ The words of the name are already found, so they are not keywords.
 
 ### Screenshots
 
-6.9-inch iPhone (1320 × 2868): `screenshots/1-welcome.png` to `screenshots/6-souvenir.png`. They show the welcome screen, the city dialog, a defense in Belgrade, a bomb blast in Paris, a speech in Milan, and a won game with its souvenir. App Store Connect scales them for the smaller iPhones. The game renders them itself, so they have no status bar.
+`screenshots/` holds the screenshots, taken on the iPhone Simulator, six of each size: `1-welcome.png`, `2-cities.png`, `3-belgrade.png`, `4-paris.png`, `5-milan.png` and `6-souvenir.png`.
+
+- iPhone 6.9" Display: `screenshots/6.9-inch/`, 1320 × 2868, from the iPhone 17 Pro Max. App Store Connect asks for this size, and can scale it for the smaller iPhones.
+- iPhone 6.3" and 6.1" Display: `screenshots/6.3-inch/`, 1206 × 2622, from the iPhone 17 Pro.
+
+| Shot | What it shows |
+|---|---|
+| `1-welcome` | The welcome screen |
+| `2-cities` | The city dialog, with the best rescues 58 in Belgrade and 72 in Paris |
+| `3-belgrade` | A game in Belgrade: thugs come at the protest by Beograđanka |
+| `4-paris` | A game in Paris, by the Cirque d'Hiver |
+| `5-milan` | A game in Milan, at Porta Venezia |
+| `6-souvenir` | A won game in Paris: 72 of 72 people saved, and the croissant |
+
+To take them again, install a Debug build on the simulator, and set a clean status bar:
+
+```bash
+xcrun simctl status_bar booted override --time 9:41 --dataNetwork wifi --wifiMode active --wifiBars 3 --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+```
+
+Before each launch, write the saved values into the app's preferences: English, the city of the shot, the language box unticked, and the best rescues.
+
+```bash
+P="$(xcrun simctl get_app_container booted dev.oblac.kolona data)/Library/Preferences/dev.oblac.kolona"
+xcrun simctl spawn booted defaults write "$P" kolona.language -string en
+xcrun simctl spawn booted defaults write "$P" kolona.city -string paris
+xcrun simctl spawn booted defaults write "$P" kolona.city.language -string false
+xcrun simctl spawn booted defaults write "$P" kolona.best.belgrade -string 58
+xcrun simctl spawn booted defaults write "$P" kolona.best.paris -string 72
+```
+
+Then launch the app, tap ENTER THE CITY and DEFEND THE PROTEST, and take the shots with `xcrun simctl io booted screenshot <file>`, about 5 to 10 seconds into the game. For the win, launch with `-calm`: a Debug build launched with it sends no attackers, so the protest reaches the square after 3 minutes.
+
+```bash
+xcrun simctl launch booted dev.oblac.kolona -calm
+```
+
+The screenshots must have no alpha channel.
 
 ### Notes for App Review
 

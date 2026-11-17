@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**Protest Defender** is a portrait escort-defense game: the player guards a protest on its way through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon, and the store screenshots and the Play feature graphic, rendered headlessly from the game.
+**Protest Defender** is a portrait escort-defense game: the player guards a protest on its way through Belgrade, Paris, or Milan. It is Kotlin Multiplatform + Compose Multiplatform (Android, iOS, desktop). All art is drawn in code with Compose Canvas. The only images are the app icons for the stores, drawn from the Android launcher icon, the Google Play screenshots and feature graphic, rendered headlessly from the game, and the App Store screenshots, taken on the iPhone Simulator (see `appstore/listing.md`; a Debug build launched with `-calm` sends no attackers, for the win).
 
 ## Commands
 
